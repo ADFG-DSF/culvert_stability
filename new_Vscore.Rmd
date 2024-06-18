@@ -1,0 +1,180 @@
+---
+title: "Investigating a new stability score"
+author: "Matt Tyers"
+date: "2024-06-13"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.height = 7, fig.width = 10)
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+library(readxl)
+
+data_smasher <- function(df, na_values = c("na", "#DIV/0!")) {
+  df <- as.data.frame(df)
+  for(j in 1:ncol(df)) {
+    df[df[, j] %in% na_values, j] <- NA
+    # maybe this should have an as.character in there too
+    if(suppressWarnings(sum(!is.na(as.numeric(as.character(df[, j])))) == sum(!is.na(df[, j])))) {
+      df[, j] <- as.numeric(df[, j])
+    } else {
+      # df[, j] <- str_replace_all(df[, j], "[^[:alnum:]]", " ")   # this doesn't work
+      for(i in 1:nrow(df)) {
+        if(suppressWarnings(is.na(as.numeric(df[i, j])))) {
+          df[i, j] <- str_replace_all(df[i, j], "[^[:alnum:]]", " ")
+        }
+      }
+      df[, j] <- tolower(df[, j])
+    }
+  }
+  return(df)
+}
+
+VTable <- read_xlsx("Assessment Data June 10 2024.xlsx",
+                    sheet = "VTable",
+                   range="A1:X67") %>% data_smasher
+
+# extracting measurements & designs (consistent by index)
+measurements <- VTable[, c(2, 6, 11, 15, 18, 21)]
+designs <- VTable[, c(3, 7, 12, 16, 19, 22)]
+
+# imputing zero for NA values in design for banks
+designs[,4:6][is.na(designs[,4:6])] <- 0
+```
+
+```{r}
+plotimage <- function(x, y, fun, main="",...) {
+  xgrid <- seq(from=min(x, na.rm=TRUE), to=max(x, na.rm=TRUE), length.out=100)
+  ygrid <- seq(from=min(y, na.rm=TRUE), to=max(y, na.rm=TRUE), length.out=100)
+  xx <- matrix(xgrid,
+               nrow=100, ncol=100)
+  yy <- matrix(ygrid,
+               nrow=100, ncol=100, byrow=TRUE)
+  zz <- fun(xx, yy)
+  # image(zz, x=xgrid, y=ygrid, xlab="design", ylab="measured", main=main)
+  # points(x,y, ...=...)
+  plot(x,y, xlab="design", ylab="measured", main=main, ...=...)
+  image(zz, x=xgrid, y=ygrid, add=TRUE)
+  abline(0,1,lty=3)
+  points(x,y, ...=...)
+}
+
+v1 <- function(des, meas) {
+  meas/des
+}
+abs_v1 <- function(des, meas) {
+  1-(meas/des)
+}
+log_v1 <- function(des, meas) {
+  meas <- meas + 0.01*diff(range(des, na.rm = TRUE))
+  des <- des + 0.01*diff(range(des, na.rm = TRUE))
+  log(meas/des)
+}
+abslog_v1 <- function(des, meas) {
+  meas <- meas + 0.01*diff(range(des, na.rm = TRUE))
+  des <- des + 0.01*diff(range(des, na.rm = TRUE))
+  abs(log(meas/des))
+}
+```
+
+
+
+## The current VTable score
+
+Currently, stability scores are calculated according to $V=\frac{Measured}{Design}$. Many design values pertaining to banks were missing; these were imputed to have a value of zero.
+
+It was very useful to me to see the design vs measurement values plotted for each possible variable.  Channel width, interior gradient, and height were relatively consistent with one obvious outlier.  Channel width and height seemed to vary with additive error (near-constant noise about the y=x line), but gradient appeared to vary with multiplicative error (increasing with x), suggesting that a ratiometric stability score is appropriate.  Bank length seemed to be either very consistent or else NOT: the measured value was either very close to the design value or else collapsed to zero (or jumped to a positive value following a zero design).  Bank height and bank width were difficult to qualitatively assess!
+
+Scatterplots are shown below for all variables, with an overlayed color ramp depicting a surface generated from the stability score rule (light yellow indicating small values, dark red indicating large values.)  The y=x line is overlayed as a dotted line.
+
+```{r}
+cols <- jagshelper::rcolors(66)
+
+par(mfrow=c(2,3))
+for(i in 1:6) {
+  plotimage(x=designs[,i], y=measurements[,i], fun=v1,
+            bg=cols, pch=21,
+            main=names(designs)[i])
+}
+```
+
+The next sequence of scatterplots show the relationships between the design value and calculated V score.  I mostly wanted to make sure that there wasn't an induced effect in which the magnitude of the design value influenced the values the V score could take on (like there would have been if we had subtracted intead of divided.)
+
+```{r}
+par(mfrow=c(2,3))
+for(i in 1:6) plot(designs[,i],
+                   v1(designs[,i], measurements[,i]),
+                   main=names(designs)[i], xlab="design", ylab="measured/design",
+                   pch=16, col=cols)
+```
+
+## Proposing a new V score
+
+I would like to propose a new V score to consider: $V = |log(\frac{Measured}{Design})|$.  It looks a little like algebraic soup, but there's some theoretical underpinning to the ugliness.  First, the log transformation has the effect of recasting variability on the multiplicative scale as happening on the additive scale.  Functionally, this means that a measured value that is 2x the design value is the same distance from equal as a measured value that is 0.5x the design value.  Second, the absolute value forces stable values to have low scores and unstable values to have high scores.  
+
+Big note: Since there were values of zero for design or measurement, a small constant was added to both, equal to 1% of the range of the associated design value.  This made the log term not become undefined, since it's no fun when that happens.
+
+Here are scatterplots for all variables, with an overlayed color ramp associated with the proposed V scoring.  Again, points falling in a red zone have a large score; points falling in a yellow zone have a small score.
+
+```{r}
+par(mfrow=c(2,3))
+for(i in 1:6) {
+  plotimage(x=designs[,i], y=measurements[,i], fun=abslog_v1,
+            bg=cols, pch=21,
+            main=names(designs)[i])
+}
+for(i in 1:6) plot(designs[,i],
+                   abslog_v1(designs[,i], measurements[,i]),
+                   main=names(designs)[i], xlab="design", ylab="abs(log(measured/design))",
+                   pch=16, col=cols)
+```
+
+## Correlation between the new V scores
+
+The correlation matrix between V scores is printed below, as are scatterplots between all pairs of scores.  Note the high correlation between all the bank values!
+
+```{r, fig.height=9}
+Vnew <- NA*designs
+for(j in 1:ncol(designs)) {
+  Vnew[,j] <- abslog_v1(designs[,j], measurements[,j])
+  Vnew[,j] <- Vnew[,j]/sd(Vnew[,j], na.rm=TRUE)
+}
+names(Vnew) <- c("Interior Channel Width", "Interior Gradient", "Height",
+                 "Bank Length", "Bank Height", "Bank Width")
+
+knitr::kable(cor(Vnew, use="na.or.complete"), digits=3)
+
+par(mfrow=c(1,1))
+plot(Vnew)
+```
+
+## Aggregating scores?
+
+Since there is a high degree of correlation between the V scores for these six variables, I was curious how much variability could be collapsed to a smaller number of measures.
+
+For this, I tried a Principal Components Analysis, which rotates k-dimensional data such that the maximum amount of variability occurs along a single (aggregate) axis, then such that the maximum amount of remaining variability occurs along an orthogonal axis, and so on.  Think of a 2-d scatterplot with a strong correlation, and rotating it such that most of the data can be explained by distance along a single line, and extending this concept to k dimensions (in our case, six).
+
+Note: scores were standardized such that each had unit variance.
+
+The principal components scoring was as summarized below, suggesting that over half of the variability among the six scores could be explained by a single variable, and that nearly all the variability among the six V scores could be explained by collapsing to four variables (not surprising, given how collinear the three bank scores were.)
+
+```{r}
+pc1 <- princomp(na.omit(Vnew))
+plot(pc1)
+summary(pc1)
+```
+
+Some additional output is below.  PCA is famously difficult to interpret, and I'm now several years out of grad school.  I would like to do a bit more research before making an idiot of myself.... however, I *think* that the plot below shows a representation of how correlated the six variables are within the first two principal components.  All the Bank variables are highly correlated with one another, and nearly completely independendent of Height and Interior Gradient, which are negatively correlated with one another.  Interior Channel width is somewhat correlated with Height and the Bank stuff.
+
+The first PC is mostly made of the three Bank variables, the second is mostly Height, the third is mostly Gradient, and the fourth is mostly Interior Channel width.  Since all PC's are fully orthogonal to one another, it can be suggested that the information in Height, Gradient, and Interior Channel Width is somewhat mutually independent.
+
+```{r}
+par(mfrow=c(1,1))
+biplot(pc1)
+pc1$loadings
+```
+
+So what from here?  We could possibly use the first PC as our best single metric of instability, since it accounted for over half of the variance among the six scores.  Or more conservatively, we use a single PC score to talk about the bank stuff (I just did a PCA with the bank variables by themselves and the first PC explained 97% of the variance!) and interpret the other scores independently of one another.  Or, we get fancy and interpret each PC as different *ways* that instability can manifest on the ground.  I haven't had time to think about this yet, but it might be interesting to try.

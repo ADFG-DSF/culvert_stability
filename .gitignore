@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+*.docx
+*.Rdata
+/ignore_for_now
