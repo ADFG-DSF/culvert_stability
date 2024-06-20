@@ -1,0 +1,60 @@
+guidelines:
+- size of CULVERT > 1.2*natural active channel OR >= active channel in wetland or low gradient system
+- gradient within 1% of natural gradient
+- embedded >=20% below natural bed scour depth and <=40% overall diameter
+- backfilled with the same size and size fraction sediment
+- low flow: should mimic depth & velocity of main stream
+- pass 100 year storm at <100% of height
+- stable stream banks upstream and downstream
+- revegetation
+ 
+immobile rock or forcing features may stabilize bed
+ 
+aggradation failures are often due to oversized channel & lack of banks
+ 
+bioengineering is critical (structures help)
+ 
+ 
+objectives:
+- evaluate stability of CONSTRUCTED CHANNELS and BANKS 
+- evaluate stability of BIOENGINEERED BANKS and RE-VEG
+hypotheses:
+- CR >= 1.2 to maintain stable channel
+   -> there is an ideal range, and effect is larger if CR is less
+- stability outside will be greater than inside
+ 
+ 
+drivers to design:
+- stream size (breakpoint 8' width)
+- gradient (breakpoint 1.5%)
+ 
+ 
+only consistent width measurement was over the top
+ 
+ 
+MANY culverts are constructed with artificial banks
+some culverts had formed banks, though not designed to
+ 
+ 
+channel features & grade control: spanning/partially/subsurface
+- recode NA as "none"?
+- or recode as yes/no
+ 
+ 
+Visual observations of sediment transport:  (all 5 reaches)
+- stable/moderate/severe erosion
+- stable/moderate/severe aggradation
+ 
+ 
+flow types
+ 
+ 
+(cross sections were problematic)
+ 
+ 
+Bioengineering assessments:
+- condition score 1-5
+- breakdown score 1-5
+ 
+ 
+measured vs designed CR

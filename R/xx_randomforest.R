@@ -108,6 +108,9 @@ for(i in 1:4) {
 #         x3_width_straight +
 #         design_cr, data=lm_all_data)
 
+par(mfrow=c(2,2))
+for(i in 1:4) rpart.plot(trees[[i]])
+
 par(mfrow=c(1,2))
 for(i in 1:4) {
   plot(fitted(trees[[i]]), lm_all_y[,i])
