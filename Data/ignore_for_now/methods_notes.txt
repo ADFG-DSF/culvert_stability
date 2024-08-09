@@ -1,5 +1,5 @@
 guidelines:
-- size of CULVERT > 1.2*natural active channel OR >= active channel in wetland or low gradient system
+- size of CULVERT >= 1.2*natural active channel OR >= active channel in wetland or low gradient system
 - gradient within 1% of natural gradient
 - embedded >=20% below natural bed scour depth and <=40% overall diameter
 - backfilled with the same size and size fraction sediment

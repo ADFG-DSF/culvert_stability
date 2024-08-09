@@ -40,9 +40,25 @@ letter2num <- function(x) {
 
 
 # Reading data!
-Designs <- read_xlsx("Data/Assessment Data June 10 2024.xlsx",
-                     sheet = "Designs",
-                     range="A1:DQ67") %>% data_smasher %>% clean_names
+
+## old version of Designs, no longer used
+# Designs <- read_xlsx("Data/Assessment Data June 10 2024.xlsx",
+#                      sheet = "Designs",
+#                      range="A1:DQ67") %>% data_smasher %>% clean_names
+
+## new version with Importance score
+Designs <- read_xlsx("Data/Design variables with importance Matt 8_7_24.xlsx",
+                      sheet = "Designs",
+                      range="A1:DR69") %>%
+  filter(!row_number() %in% 1:2) %>%
+  data_smasher %>% clean_names
+Importance <- read_xlsx("Data/Design variables with importance Matt 8_7_24.xlsx",
+                        sheet = "Designs",
+                        range="A1:DR69") %>%
+  filter(row_number() %in% 1:2) %>%
+  data_smasher %>% clean_names
+importancevec <- as.character(Importance[1,])
+
 Visual_Stability <- read_xlsx("Data/Assessment Data June 10 2024.xlsx",
                               sheet = "Visual Stability",
                               range="A1:L67") %>% data_smasher %>% clean_names
@@ -60,66 +76,3 @@ Measured_in_Field <- read_xlsx("Data/Assessment Data June 10 2024.xlsx",
                                range="A1:RS67") %>% data_smasher %>% clean_names
 
 
-### reading the data annotation and comparing to original data
-
-Design_annotation <- read_xlsx("Data/Design variables with importance Matt 8_7_24.xlsx",
-                               sheet = "Designs",
-                               range="A1:DR3") %>%  clean_names
-
-names1 <- names(Designs)
-names2 <- names(Design_annotation)[-4]
-data.frame(names1[names1 != names2],
-names2[names1 != names2])
-
-## names are basically consistent
-## names are not unique: should probably append reach number
-
-Designs2 <- read_xlsx("Data/Design variables with importance Matt 8_7_24.xlsx",
-                               sheet = "Designs",
-                               range="A1:DR69") %>%  clean_names
-importance <- Designs2[1,] %>%
-  as.data.frame %>%
-  as.character %>%
-  (\(x) x[-4])
-Designs2 <- Designs2[-(1:2),-4]
-Designs2 <- data_smasher(Designs2)
-all.equal(Designs,Designs2)
-for(i in 1:ncol(Designs)) {
-  thetab <- table(Designs[,i] == Designs2[,i], useNA="always")
-  print(sum(thetab)==sum(diag(thetab)))
-}
-## data has not changed!! hoooray
-
-# lets see if i can figure out what's going on with non-unique names
-names1 %>%
-  strsplit(split="_") %>%
-  sapply(\(x) x[length(x)]) %>%
-  sapply(\(x) !is.na(as.numeric(x))) %>% suppressWarnings -> isnumber
-
-names1[isnumber] %>%#
-  strsplit(split="_") %>%
-  sapply(\(x) x[-length(x)]) %>%
-  sapply(paste, collapse="_") %>%
-  table %>%
-  (\(x) names(x)[x>1]) -> multiples
-
-names1 %>%
-  strsplit(split="_") %>%
-  sapply(\(x) x[-length(x)]) %>%
-  sapply(paste, collapse="_") -> firstnames
-
-### these names occur multiple times
-names1[firstnames %in% multiples]
-names1[firstnames %in% multiples & importance=="High"]
-names1[firstnames %in% multiples & importance %in% c("High","Medium")]
-# "banks_y_n_9"         "reach_3_gradient_50"
-
-# finally, which of the important ones have inconsistencies?
-which(Designs$banks_y_n_9 != Designs$banks_y_n_121)
-which(Designs$reach_3_gradient_50 != Designs$reach_3_gradient_120)
-which(is.na(Designs$design_cr == Designs$reach3_design_cr))
-
-names1[importance=="High"]
-names1[importance=="Medium"]
-importance[is.na(importance)] <- 0
-summary(Designs[,importance=="High" | importance=="Medium"])
