@@ -166,3 +166,4 @@ pca_out[!is.na(rowSums(Vabs[,4:6])),
 colnames(pca_out) <- c(paste0("PCA_all_", 1:ncol(pc_all$scores)),
                        paste0("PCA_banks_", 1:ncol(pc_banks$scores)))
 pca_out <- as.data.frame(pca_out)
+
