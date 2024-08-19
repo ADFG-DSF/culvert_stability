@@ -1,0 +1,329 @@
+---
+title: "Multiple Regression Models for Instability"
+author: "Matt Tyers"
+date: "2024-08-16"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 12, fig.height = 7, results="hide")
+```
+
+```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
+# loading all objects
+source("R/3_Instability_EDA.R")
+
+# data subset - CURRENTLY ALL NON-MISSING ROWS
+dsub <- Designs_medhigh[, colSums(is.na(Designs_medhigh)) == 0]  %>% 
+  rename(culvert_shape = culvert_shape_at_waterline_straight_sides_or_curved) %>%
+  rename(banks_y_n = banks_y_n_10) %>%
+  rename(reach_3_width = x3_width_straight) %>%
+  rename(reach_3_gradient = reach_3_gradient_51) %>%
+  rename(reach_3_channel_type = reach_3_geo_channel_type)
+
+# loading additional packages
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+# defining functions to use
+rmse <- function(x1, x2) sqrt(mean((x1-x2)^2))
+lm_grow <- function(x, y, xnames=NULL, plotpreds=TRUE) {
+  if(is.null(xnames)) xnames <- 1:ncol(x)
+
+  x <- x[!is.na(y),]
+  y <- y[!is.na(y)]
+
+  # rmse no-model
+  ypred <- rep(NA, length(y))
+  for(idata in 1:length(y)) {
+    ypred[idata] <- mean(y[-i])
+  }
+  lowest_rmse <- rmse(y,ypred)
+
+  vars_grow <- NULL
+  continue <- TRUE
+  while(continue) {
+    rmse_iter <- rep(NA, ncol(x))
+    for(ivar in (1:ncol(x))[!(1:ncol(x)) %in% vars_grow]) {
+      # lmtrial <- lm(y~., data=as.data.frame(cbind(y, x[, c(vars_grow, ivar)])))
+      ivar_data <- as.data.frame(cbind(y, x[, c(vars_grow, ivar)]))
+      ypred <- rep(NA, length(y))
+      for(idata in 1:length(y)) {
+        ypred[idata] <- predict(lm(y~., data=ivar_data[-idata,]),
+                                newdata=ivar_data[idata,])
+      }
+      rmse_iter[ivar] <- rmse(y, ypred)
+    }
+
+    minrmse <- min(rmse_iter, na.rm=TRUE)
+    if(minrmse >= min(lowest_rmse)) {
+      continue <- FALSE
+    } else {
+      plot(rmse_iter, pch=ifelse(rmse_iter==minrmse, 16, 1),
+           xlab="", ylab="LOOCV RMSE", xaxt="n", main=paste(xnames[vars_grow],"+"))
+      axis(side=1, at=seq_along(rmse_iter), labels=xnames, las=2)
+      vars_grow <- c(vars_grow, which.min(rmse_iter))
+      lowest_rmse[length(vars_grow)+1] <- minrmse
+
+      if(plotpreds) {
+        thedata <- as.data.frame(cbind(y, x[, vars_grow]))
+        ypred <- rep(NA, length(y))
+        for(idata in 1:length(y)) {
+          ypred[idata] <- predict(lm(y~., data=thedata[-idata,]),
+                                  newdata=thedata[idata,])
+        }
+        plot(ypred, y, xlab="LOOCV Predicted y", ylab="True y",
+             main=xnames[vars_grow])
+        legend("topleft", paste("R^2 =", round(cor(ypred, y)^2, 3)), bg=NA)
+        abline(0,1)
+      }
+    }
+
+
+    if(length(vars_grow) >= ncol(x)) continue <- FALSE
+  }
+  if(!is.null(vars_grow)) {
+    plot(0:length(vars_grow), lowest_rmse, xaxt="n", xlab="", ylab="LOOCV RMSE", type="b")
+    axis(side=1, at=0:length(vars_grow), labels=c(0, paste("+",xnames[vars_grow])), las=2)
+
+    lmfinal <- lm(y~., data=thedata)
+    plot(predict(lmfinal), y, xlab="Fitted y", ylab="True y")
+    legend("topleft", paste("R^2 =", round(summary(lmfinal)$r.squared, 3)), bg=NA)
+    abline(0,1)
+  }
+
+  return(vars_grow)
+}
+
+build_rpart <- function(yy, x) {   # CAREFUL: the data.fram dsub is pulled from environment!!!
+  thedata <- cbind(yy, x)[!is.na(yy),]
+  rmses <- rsqds <- NA
+
+  # deciding which value of minsplit to use
+  splits <- 5:30
+  for(isplit in seq_along(splits)) {
+    ypred <- rep(NA, nrow(thedata))
+    for(i in 1:nrow(thedata)) {
+      ypred[i] <- predict(rpart(yy~., data=thedata[-i,],
+                                control=rpart.control(minsplit=splits[isplit])),
+                          newdata=thedata[i,])
+    }
+    rmses[isplit] <- rmse(thedata$yy,ypred)
+    rsqds[isplit] <- cor(thedata$yy,ypred)^2
+  }
+
+  # plotting minsplit
+  par(mar=c(4,4,4,2))
+  plot(splits,rmses, ylab="prediction RMSE", xlab="minsplit", type="b")#, ylim=range(rmses, rsqds)
+  abline(v=splits[which.min(rmses)])
+
+  # fitting the best model
+  thepart <- rpart(yy~., data=thedata, minsplit=splits[which.min(rmses)]) #, minsplit=27
+
+  # calculating loocv predicted values & R^2
+  ypred <- rep(NA, nrow(thedata))
+  for(i in 1:nrow(thedata)) {
+    ypred[i] <- predict(rpart(yy~., data=thedata[-i,],
+                              minsplit=splits[which.min(rmses)]),
+                        newdata=thedata[i,])
+  }
+
+  # plotting y vs loocv predicted y, and y vs fitted y
+  par(mar=c(12,4,4,2))
+  thepart$variable.importance %>% barplot(las=3, main="variable importance")
+  rpart.plot(thepart)
+  par(mar=c(4,4,4,2))
+  plot(ypred, thedata$yy, xlab="LOOCV predicted y", ylab="true y")
+  legend("topleft", legend=paste("R^2 =", round(cor(ypred,thedata$yy)^2, 3)))
+  abline(0,1)
+  plot(predict(thepart),thedata$yy, xlab="Fitted y", ylab="true y")
+  legend("topleft", legend=paste("R^2 =", round(cor(predict(thepart),thedata$yy)^2, 3)))
+  abline(0,1)
+}
+```
+
+
+
+## Overview of methods
+
+### Variables
+
+Multiple Linear Regression (MLR) was used to explore the effects of multiple design variables on stability, as quantified by stability scores calculated by inconsistency between four different measurements and their respective design values, according to the form below, for measurement $k$ of culvert $i$.  Scores were standardized by their respective standard deviation, to set all four sets of scores on an equivalent scale.
+
+$V_{k[i]}^{(raw)} = log \left(\frac{X_{measured[i]}}{X_{design[i]}}\right)$
+
+$V_{k[i]} = \frac{V_{k[i]}^{(raw)}}{SD \left(V_{k[.]}^{(raw)}\right)}$
+
+It should be noted that a previous analysis used the *absolute value of* the log ratio; this is no longer used.  Strongly negative V scores may be interpreted as change in the negative direction with respect to measurements, positive V scores may be interpreted as change in the positive direction, and scores near zero may be interpreted as stable.
+
+The following design variables were considered.  These were variables identified as of High or Medium importance, and with no missing data.  Note: this can be expanded to include variables with some missing data if desired, though this may have an unknown effect on model selection criteria.
+
+```{r,results='markup'}
+print(names(dsub))
+```
+
+### Model Scoring
+
+With many potential explanatory variables and a relatively limited sample size, overfitting (selecting too many variables) was a concern, since each culvert by itself had the potential to affect the overall model fit.  To address this concern, the fit of a prospective model was evaluated according to its predictive power.  This was calculated by means of leave-one-out cross validation (LOOCV), and scored using prediction root mean square error (RMSE), calculated according to the form:
+
+$RMSE = \sqrt{\frac{1}{n}\sum(y_i-y^*_i)^2}$
+
+in which $y^*_i$ represents the predicted value for instability score for culvert $i$, predicted from a prospective model *without* using the data from culvert $i$.  Apologies, these are V scores, and I see now that I switched from V to the more general $y$ in the plots on subsequent pages.
+
+### Model-building Algorithm
+
+Initially, I constructed an algorithm to fit models for every combination of variables, and do LOOCV scoring on all of them.  This was time-consuming to run, probably prohibitively so if we want to consider more variables!  I ended up writing an algorithm in which each variable was considered in turn, and the variable with the best predictive accuracy (lowest LOOCV RMSE) selected.  Then, the remaining variables were considered and iteratively added, until there was no improvement to LOOCV RMSE.  This agglomerative algorithm ended up finding the globally best predictive model in a fraction of the time.
+
+### An Important Note on Interpretation
+
+This dataset contains many explanatory variables that contain very similar information, or at least are strongly related to one another.  For example, for instability related to Interior Channel Width, four design variables are much more important in themselves: Banks (y/n), Bank Design Type (1/2/3), Design CR (numeric), and Design CR (categorical).  Banks (y/n) contains basically the same information as Bank Design Type (1/2/3), and when one of the two is selected, the other does not add appreciably to the model.  Interestingly, there is a strong relationship between Banks and Design CR (you probably have better insights as to why!), so when a Banks variable is already in the model, the effect of a CR variable is washed out.  It also begs the question: is the observed effect due to Banks, or due to CR?  At my end, it's impossible to say.
+
+All this to say: the variables included in the final "best" model do not necessarily represent the most important variables by themselves!  Most likely, they represent the most mutually-independent collection of variables that add meaningful predictive power.
+
+\pagebreak
+
+### Plots to Follow
+
+#### Multiple Regression
+
+Two sets of plots are included for each of four V scores.  The first sequence shows the results of the agglomerative MLR model-building algorithm, with the top row showing the LOOCV RMSE associated with all variables at each step (left to right), adding a new variable in each step.  The first plot (top left) therefore illustrates which variables are important by themselves.  
+
+The plot at the top right shows the overall drop in LOOCV RMSE as variables are added.  In two of the four cases, most of the drop in LOOCV RMSE happened with the first variable!
+
+The next row illustrates the predictive power of each iteration of model building, with *LOOCV predicted* *y* on the x-axis ($y^*$ previously), as calculated by models fit *without* each observation, and the $R^2$ reported represents the $R^2$ of *prediction*.  Finally, the plot at the bottom right of this set shows the fitted *y* (fitted V score) on the x-axis and true *y* (true V score) on the y-axis, along with the $R^2$ of model fit.  The line overlayed with these plots is the y=x equality line, not a regression line.
+
+#### Regression Tree
+
+Below this is a set of plots from a regression tree for each variable.  I have to confess, I know relatively little about the machinery behind regression trees.  The R documentation for the `rpart` function just says that "it follows Breiman et. al (1984) quite closely."  Breiman et al is a textbook, and it's one I haven't read!
+
+Two differences between MLR and regression trees that immediately come to mind are
+* trees treat all numerical variables as categorical, and can perform better if there are nonlinear or especially threshold effects, but poorly if there are approximately linear effects
+* nodes in a tree are conditional only on the previous nodes, whereas MLR effects are global.
+
+There is a set of tuning parameters for regression trees that I honestly haven't messed with, that decide when to attempt a split and when not to.  The first plot (top left) in this set shows trial values of `minsplit`, which is the minimum number of observations in a node to consider a split, vs LOOCV RMSE associated with trees computed at each value.  A tree was then constructed with the best value of `minsplit`.
+
+The next plot is Variable Importance.  I don't know how this is mathematically defined, but seems to be a measure of the overall importance of each variable at the top level.  Often, variables with a high importance score are not used in the final tree, which is probably analogous to important variables not appearing in a final MLR model.
+
+Finally, true *y* (V score) vs LOOCV predicted y and Fitted y, and their respective values of $R^2$.  These can be compared to their MLR counterparts, the final two plots of the MLR set.  Again, the overlayed line is the y=x line, not a regression line.
+
+\pagebreak
+
+## Interior Channel Width
+
+### Multiple Regression
+
+```{r}
+whichone <- 1
+
+par(mfcol=c(2,5))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+```
+
+### Regression Tree
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub, yy=Vdir[,whichone])
+```
+
+\pagebreak
+
+## Interior Gradient
+
+### Multiple Regression
+
+```{r}
+whichone <- 2
+
+par(mfcol=c(2,3))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+```
+
+### Regression Tree
+
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub, yy=Vdir[,whichone])
+```
+
+\pagebreak
+
+## Height
+
+### Multiple Regression
+
+```{r}
+whichone <- 3
+
+par(mfcol=c(2,3))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+```
+
+### Regression Tree
+
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub, yy=Vdir[,whichone])
+```
+
+\pagebreak
+
+## Bank Length
+
+### Multiple Regression
+
+```{r}
+whichone <- 4
+
+par(mfcol=c(2,4))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+```
+
+### Regression Tree
+
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub, yy=Vdir[,whichone])
+```
+
+```{r}
+# # ---
+# 
+# whichone <- 2
+# 
+# par(mfcol=c(2,2))
+# par(mar=c(10,4,4,2))
+# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+# 
+# par(mfrow=c(2,3))
+# build_rpart(x=dsub, yy=Vdir[,whichone])
+# 
+# # ---
+# 
+# whichone <- 3
+# 
+# par(mfcol=c(2,3))
+# par(mar=c(10,4,4,2))
+# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+# 
+# par(mfrow=c(2,3))
+# build_rpart(x=dsub, yy=Vdir[,whichone])
+# 
+# # ---
+# 
+# whichone <- 4
+# 
+# par(mfcol=c(2,4))
+# par(mar=c(10,4,4,2))
+# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+# 
+# par(mfrow=c(2,3))
+# build_rpart(x=dsub, yy=Vdir[,whichone])
+# 
+# # ---
+```

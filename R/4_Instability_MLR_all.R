@@ -368,8 +368,8 @@ yy <- Vdir[,1]
 ## - the tree itself
 ## - y vs loocv predicted y
 ## - y vs fitted y
-build_rpart <- function(yy) {   # CAREFUL: the data.fram dsub is pulled from environment!!!
-  thedata <- cbind(yy, dsub)[!is.na(yy),]
+build_rpart <- function(yy, x) {   # CAREFUL: the data.fram dsub is pulled from environment!!!
+  thedata <- cbind(yy, x)[!is.na(yy),]
   rmses <- rsqds <- NA
 
   # deciding which value of minsplit to use
@@ -427,7 +427,7 @@ par(mar=c(10,4,4,2))
 lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
 
 par(mfrow=c(2,3))
-build_rpart(yy=Vdir[,whichone])
+build_rpart(x=dsub, yy=Vdir[,whichone])
 
 # ---
 
@@ -438,7 +438,7 @@ par(mar=c(10,4,4,2))
 lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
 
 par(mfrow=c(2,3))
-build_rpart(yy=Vdir[,whichone])
+build_rpart(x=dsub, yy=Vdir[,whichone])
 
 # ---
 
@@ -449,7 +449,7 @@ par(mar=c(10,4,4,2))
 lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
 
 par(mfrow=c(2,3))
-build_rpart(yy=Vdir[,whichone])
+build_rpart(x=dsub, yy=Vdir[,whichone])
 
 # ---
 
@@ -460,7 +460,7 @@ par(mar=c(10,4,4,2))
 lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
 
 par(mfrow=c(2,3))
-build_rpart(yy=Vdir[,whichone])
+build_rpart(x=dsub, yy=Vdir[,whichone])
 
 # ---
 

@@ -1,0 +1,314 @@
+---
+title: "In which there are altogether too many EDA plots"
+author: "Matt Tyers"
+date: "2024-08-19"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 13, fig.height = 18, results="hide", warning=FALSE, message=FALSE)
+```
+
+## Overview
+
+A sequence of automated plots follow, for all combinations of:
+
+-   V scores (directional & numeric), calculated as
+
+$V_{k[i]}^{(raw)} = log \left(\frac{X_{measured[i]}}{X_{design[i]}}\right)$
+
+$V_{k[i]} = \frac{V_{k[i]}^{(raw)}}{SD \left(V_{k[.]}^{(raw)}\right)}$
+
+-   V scores (absolute & numeric), calculated as $V_{k[i]}^{(abs)} = |V_{k[i]}|$
+
+-   V scores (directional & categorical), defined as
+
+$V_{k[i]}^{(cat)} =  \left\{\begin{array}{lr}  \texttt{"-Negative"}, & \frac{X_{design[i]}}{X_{measured[i]}} > 1.5\\  \texttt{"+Positive"}, & \frac{X_{measured[i]}}{X_{design[i]}} > 1.5\\  \texttt{" Stable"}, & \texttt{else}  \end{array}\right.$
+
+-   V scores (absolute & categorical), defined similarly.
+
+-   V score measurement:
+    -   Interior Channel Width
+    -   Interior Gradient
+    -   Height
+    -   Bank Length
+
+- Design Variables, both recorded and derived (currently 35 in total!)  Categorical variables were also defined for Design CR (less than 1.1, 1.1 to 1.3, greater than 1.3), and for gradient and width differences between reaches 2 and 3 and reaches 4 and 3 (relative differences exceeding 5%).
+
+Test p-values are reported for all plots, corresponding to ANOVA, simple linear regression, or Chi-squared tests.  Plots also include categories for missing data, but missing data were excluded from statistical tests.  Test p-values are included for exploratory purposes ONLY, and should not be interpreted as biometrically sound!!
+
+\pagebreak
+
+```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
+source("R/2_InstabilityScore_PCA.R")
+```
+
+```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
+###### -------- data subsetting, formatting, and creation of new variables
+
+# converting from numeric to factor
+Designs$bank_design_type <- as.character(Designs$bank_design_type)
+
+# creating a new dataset where importance is "high"
+Designs_high <- Designs[, importancevec %in% "high"]
+
+# -- defining a few new variables -- #
+# categorical version of design cr
+Designs_high$reach3_design_cr_cat <- cut(Designs_high$reach3_design_cr, c(0,1.1,1.3,3))
+
+
+
+dim(Designs_high)
+par(mfrow=c(1,1))
+# plot(Designs_high)
+summary(Designs_high)
+
+# how many missing values?
+image(is.na(Designs_high))
+colMeans(is.na(Designs_high))
+colSums(is.na(Designs_high))
+sum(colSums(is.na(Designs_high)) == 0)
+sum(colSums(is.na(Designs_high)) <= 1)
+
+
+
+# creating a new dataset where importance is "high" or "medium"
+Designs_medhigh <- Designs[, importancevec %in% c("medium","high")]
+
+# -- defining a few new variables -- #
+# categorical version of design cr
+Designs_medhigh$reach3_design_cr_cat <- Designs_high$reach3_design_cr_cat
+
+# inconsistency in gradient & width
+aa <- 0.2
+# Designs_medhigh$grad_diff_2vs3 <- log((aa+Designs_medhigh$reach_2_gradient)/
+#                                         (aa+Designs_medhigh$reach_3_gradient_51))
+Designs_medhigh$grad_diff_2vs3 <- ifelse(Designs_medhigh$reach_2_gradient/
+                                           Designs_medhigh$reach_3_gradient_51 > 1.05, ">greater",
+                                         ifelse(Designs_medhigh$reach_3_gradient_51/
+                                                  Designs_medhigh$reach_2_gradient > 1.05, "<less",
+                                                "=same"))
+# plot(Designs_medhigh$grad_diff_2vs3)
+# Designs_medhigh$grad_diff_4vs3 <- -log((aa+Designs_medhigh$reach_3_gradient_51)/
+#                                           (aa+Designs_medhigh$reach_4gradient))
+Designs_medhigh$grad_diff_4vs3 <- ifelse(Designs_medhigh$reach_4gradient/
+                                           Designs_medhigh$reach_3_gradient_51 > 1.05, ">greater",
+                                         ifelse(Designs_medhigh$reach_3_gradient_51/
+                                                  Designs_medhigh$reach_4gradient > 1.05, "<less",
+                                                "=same"))
+# plot(Designs_medhigh$grad_diff_4vs3)
+# Designs_medhigh$width_diff_2vs3 <- log(Designs_medhigh$x2_width_straight/
+#                                          Designs_medhigh$x3_width_straight)
+Designs_medhigh$width_diff_2vs3 <- ifelse(Designs_medhigh$x2_width_straight/
+                                         Designs_medhigh$x3_width_straight > 1.05, ">greater",
+                                         ifelse(Designs_medhigh$x3_width_straight/
+                                                  Designs_medhigh$x2_width_straight > 1.05,
+                                                "<less","=same"))
+# Designs_medhigh$width_diff_4vs3 <- -log(Designs_medhigh$x3_width_straight/
+#                                          Designs_medhigh$x4_width_straight)
+Designs_medhigh$width_diff_4vs3 <- ifelse(Designs_medhigh$x4_width_straight/
+                                            Designs_medhigh$x3_width_straight > 1.05, ">greater",
+                                          ifelse(Designs_medhigh$x3_width_straight/
+                                                   Designs_medhigh$x4_width_straight > 1.05,
+                                                 "<less","=same"))
+
+dim(Designs_medhigh)
+par(mfrow=c(1,1))
+# plot(Designs_medhigh)
+summary(Designs_medhigh)
+
+# how many missing values?
+image(is.na(Designs_medhigh))
+colMeans(is.na(Designs_medhigh))
+colSums(is.na(Designs_medhigh))
+sum(colSums(is.na(Designs_medhigh)) == 0)
+sum(colSums(is.na(Designs_medhigh)) <= 1)
+
+
+## Lots of missing values.  Will explore effects each variable separately, then
+## only do MLR/tree on dataset with sufficient data.
+apply(Designs_medhigh, 2, \(x) length(unique(x)))
+
+
+# see if any variables are fully repeated (spoiler alert: one is)
+repeated <- NULL
+for(i in 1:(ncol(Designs_medhigh)-1)) {
+  for(j in (i+1):ncol(Designs_medhigh)) {
+    if(i != j) {
+      if(all(Designs_medhigh[,i]==Designs_medhigh[,j]) & all(is.na(Designs_medhigh[,i])==is.na(Designs_medhigh[,j]))) {
+        repeated <- c(repeated, j)
+      }
+    }
+  }
+}
+repeated
+Designs_medhigh <- Designs_medhigh[,-repeated]
+
+
+
+
+
+#### --------------- EDA for all instability scores vs all variables (NUMERIC)
+
+
+## creating a plotting function to plot ALL instability scores vs ALL variables
+magicplot <- function(x, y, main,...) {
+  # assuming y is numeric
+  pval <- summary(lm(y~x))$coefficients[2,4]
+  if(class(x) %in% c("factor","character")) {
+    x[is.na(x)] <- "_NA_"
+    thetab <- table(x)
+    theplotnames <- boxplot(y~x, plot=FALSE)$names
+    namestoplot <- rep(NA, length(theplotnames))
+    for(inames in seq_along(namestoplot)) {
+      namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
+                                    sum(x==theplotnames[inames]), ")")
+    }
+    boxplot(y ~ x,
+            main=c(main, paste("Anova pval =", round(pval, 4))),
+            xlab="",
+            names = namestoplot,
+            # names = paste0(names(thetab), " (n = ", thetab, ")"),
+            las=2,
+            ...=...)
+  } else {
+    NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
+    x[is.na(x)] <- NAval
+    plot(y ~ x,
+         main=c(main, paste("Reg pval =", round(pval, 4))),
+         xlab="", col=1+(x==NAval),
+         ...=...)
+    axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
+  }
+}
+```
+
+```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
+Vabs_cat <- Vdir_cat <- NA*Vabs
+for(i in 1:4) {
+  # Vabs_cat[,i] <- ifelse(Vabs[,i] < log(1.5), "Stable", "Unstable")
+  # vscores were standardized by sd, therefore not fully consistent abs vs dir
+
+  Vabs_cat[,i] <- ifelse(abs(Vdir[,i]) < log(1.5), "Stable", "Unstable")
+  Vdir_cat[,i] <- ifelse(Vdir[,i] < -log(1.5), "-Negative",
+                         ifelse(Vdir[,i] > log(1.5), "+Positive", " Stable"))
+}
+
+magicplot_cat <- function(x, y, main, ylab, ...) {
+  # assuming y is categorical
+
+  if(class(x) %in% c("factor","character")) {
+    # mosaicplot with addl NA and sample sizes for columns
+    thetable1 <- table(x,y)
+    pval <- chisq.test(thetable1)$p.value
+    x <- as.character(x)
+    x[is.na(x)] <- "_NA_"
+    thetable2 <- table(x,y)
+    dimnames(thetable2)[[1]] <- paste0(dimnames(thetable2)[[1]],
+                                       " (n = ", table(x),")")
+    mosaicplot(thetable2, xlab=main, ylab="",# labs are new
+               main=c(ylab, paste("chi^2 pval =", round(pval, 4))), #was main
+               ...=...)
+
+  } else {
+    #
+    # NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
+    # x[is.na(x)] <- NAval
+    # plot(y ~ x,
+    #      main=c(main, paste("Reg pval =", round(pval, 4))),
+    #      xlab="", col=1+(x==NAval),
+    #      ...=...)
+    # axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
+    pval <- summary(lm(x~y))$coefficients[2,4]
+    y <- as.character(y)
+    # y[is.na(y)] <- "_NA_"
+    thetab <- table(y)
+    theplotnames <- boxplot(x~y, plot=FALSE)$names
+    namestoplot <- rep(NA, length(theplotnames))
+    for(inames in seq_along(namestoplot)) {
+      namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
+                                    sum(y==theplotnames[inames], na.rm=TRUE), ")")
+    }
+    boxplot(x ~ y,
+            main=c(ylab, paste("Anova pval =", round(pval, 4))), # was main
+            xlab="",
+            ylab=main, # new
+            names = namestoplot,
+            # names = paste0(names(thetab), " (n = ", thetab, ")"),
+            las=2,
+            ...=...)
+  }
+}
+```
+
+## Directional Instability - Numeric
+
+```{r}
+names(Vdir) <- paste("V", names(Vdir))
+names(Vabs) <- paste("V", names(Vabs))
+names(Vdir_cat) <- paste("V", names(Vdir_cat))
+names(Vabs_cat) <- paste("V", names(Vabs_cat))
+
+
+# considering directional instability
+par(mfrow=c(6,4))
+for(i in 1:ncol(Designs_medhigh)) {
+  for(j in 1:4) {
+    par(mar=c(8,5,4,2))
+    magicplot(x=Designs_medhigh[,i],
+              y=Vdir[,j],
+              main=names(Designs_medhigh)[i],
+              ylab=names(Vdir)[j])
+  }
+}
+```
+
+## Absolute Instability - Numeric
+
+```{r}
+# considering absolute instability
+par(mfrow=c(7,4))
+for(i in 1:ncol(Designs_medhigh)) {
+  for(j in 1:4) {
+    par(mar=c(8,5,4,2))
+    magicplot(x=Designs_medhigh[,i],
+              y=Vabs[,j],
+              main=names(Designs_medhigh)[i],
+              ylab=names(Vabs)[j])
+  }
+}
+```
+
+## Directional Instability - Categorical
+
+```{r}
+# considering directional instability
+par(mfrow=c(7,4))
+par(mar=c(8,5,4,2))
+for(i in 1:ncol(Designs_medhigh)) {
+  for(j in 1:4) {
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vdir_cat[,j],
+                  main=names(Designs_medhigh)[i],
+                  ylab=names(Vdir_cat)[j],
+                  col=c(4,3,2))
+  }
+}
+```
+
+## Absolute Instability - Categorical
+
+```{r}
+# considering absolute instability
+par(mfrow=c(7,4))
+par(mar=c(8,5,4,2))
+for(i in 1:ncol(Designs_medhigh)) {
+  for(j in 1:4) {
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vabs_cat[,j],
+                  main=names(Designs_medhigh)[i],
+                  ylab=names(Vdir_cat)[j],
+                  col=c(3,2))
+  }
+}
+```
