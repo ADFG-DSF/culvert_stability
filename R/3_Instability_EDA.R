@@ -358,6 +358,36 @@ for(i in 1:ncol(Designs_medhigh)) {
 
 
 
+### structuring a little differently
+
+par(mfrow=c(4,4))
+for(i in 1:ncol(Designs_medhigh)) {
+  for(j in 1:4) {
+    par(mar=c(8,5,4,2))
+    magicplot(x=Designs_medhigh[,i],
+              y=Vdir[,j],
+              main=names(Designs_medhigh)[i],
+              ylab=names(Vdir)[j])
+    magicplot(x=Designs_medhigh[,i],
+              y=Vabs[,j],
+              main=names(Designs_medhigh)[i],
+              ylab=names(Vdir)[j])
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vdir_cat[,j],
+                  main=names(Designs_medhigh)[i],
+                  ylab=names(Vdir_cat)[j],
+                  col=c(4,3,2))
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vabs_cat[,j],
+                  main=names(Designs_medhigh)[i],
+                  ylab=names(Vdir_cat)[j],
+                  col=c(3,2))
+  }
+}
+
+
+
+
 #### --------------- Creating a summary table of all single test p-values
 
 
