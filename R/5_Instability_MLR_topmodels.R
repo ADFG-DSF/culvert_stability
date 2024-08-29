@@ -1,19 +1,19 @@
 # decisions that I want to make:
-#   * which score?
+# * which score?
 #   - numeric & directional
-# - numeric & absolute
-# - categorical & directional
-# - categorical & absolute
+#   - numeric & absolute
+#   - categorical & directional
+#   - categorical & absolute
 # * MLR?  Tree?
 #   * Measured variables?
 #
-#   follow-up decisions:
-#   * how to present results visually (meh can think about that later)
+# follow-up decisions:
+# * how to present results visually (meh can think about that later)
 # * what to present: top model & important variables
 #
 #
 # what to make for today:
-#   * EDA plots for JUST top-level important variables
+# * EDA plots for JUST top-level important variables
 # * caterpillar plots for top models.... would be MUCH better as Bayesian effect plots
 # * correlation plot for numeric/directional
 
@@ -296,7 +296,8 @@ maketheplots <- function(vmod_data, vmod_jags_out) {
                 # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
                 # vmod_jags_out, p="bcat1",
                 main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-                xax=cat1_levels, add=TRUE, col=4)
+                xax=cat1_levels, add=TRUE, col=4, lwd=2,
+                x=(1:ncol(vmod_jags_out$sims.list$bcat1)) + 0.2)
     abline(h=0, lty=2)
   }
   if(vmod_data$do_cat[2]) {
@@ -307,7 +308,8 @@ maketheplots <- function(vmod_data, vmod_jags_out) {
                 # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
                 # vmod_jags_out, p="bcat1",
                 main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-                xax=cat2_levels, add=TRUE, col=4)
+                xax=cat2_levels, add=TRUE, col=4, lwd=2,
+                x=(1:ncol(vmod_jags_out$sims.list$bcat2)) + 0.2)
     abline(h=0, lty=2)
   }
   if(vmod_data$do_cat[3]) {
@@ -318,7 +320,8 @@ maketheplots <- function(vmod_data, vmod_jags_out) {
                 # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
                 # vmod_jags_out, p="bcat1",
                 main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-                xax=cat3_levels, add=TRUE, col=4)
+                xax=cat3_levels, add=TRUE, col=4, lwd=2,
+                x=(1:ncol(vmod_jags_out$sims.list$bcat3)) + 0.2)
     abline(h=0, lty=2)
   }
 }
