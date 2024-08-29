@@ -37,7 +37,7 @@ $V_{k[i]}^{(cat)} =  \left\{\begin{array}{lr}  \texttt{"-Negative"}, & \frac{X_{
 
 Test p-values are reported for all plots, corresponding to ANOVA, simple linear regression, or Chi-squared tests.  Plots also include categories for missing data, but missing data were excluded from statistical tests.  Test p-values are included for exploratory purposes ONLY, and should not be interpreted as biometrically sound!!
 
-\pagebreak
+
 
 ```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
 source("R/2_InstabilityScore_PCA.R")
@@ -255,8 +255,9 @@ names(Vdir) <- paste("V", names(Vdir))
 names(Vabs) <- paste("V", names(Vabs))
 names(Vdir_cat) <- paste("V", names(Vdir_cat))
 names(Vabs_cat) <- paste("V", names(Vabs_cat))
+```
 
-
+```{r, , eval=FALSE}
 # considering directional instability
 par(mfrow=c(6,4))
 for(i in 1:ncol(Designs_medhigh)) {
@@ -272,7 +273,7 @@ for(i in 1:ncol(Designs_medhigh)) {
 
 ## Absolute Instability - Numeric
 
-```{r}
+```{r, eval=FALSE}
 # considering absolute instability
 par(mfrow=c(7,4))
 for(i in 1:ncol(Designs_medhigh)) {
@@ -288,7 +289,7 @@ for(i in 1:ncol(Designs_medhigh)) {
 
 ## Directional Instability - Categorical
 
-```{r}
+```{r, eval=FALSE}
 # considering directional instability
 par(mfrow=c(7,4))
 par(mar=c(8,5,4,2))
@@ -305,7 +306,7 @@ for(i in 1:ncol(Designs_medhigh)) {
 
 ## Absolute Instability - Categorical
 
-```{r}
+```{r, eval=FALSE}
 # considering absolute instability
 par(mfrow=c(7,4))
 par(mar=c(8,5,4,2))
@@ -316,6 +317,49 @@ for(i in 1:ncol(Designs_medhigh)) {
                   main=names(Designs_medhigh)[i],
                   ylab=names(Vdir_cat)[j],
                   col=c(3,2))
+  }
+}
+```
+
+# Another way of looking at this - Each row is an explanatory variable, each column is a response variable type
+
+```{r, results='asis', fig.height=14}
+j <- 1   ##### actually do a section for each explanatory variable i
+         ##### then can loop over j again with par(mfrow=c(2,2))
+
+par(mfrow=c(4,4))
+par(mar=c(5,6,4,2))
+  
+  for(i in 1:ncol(Designs_medhigh)) {
+    cat("## ", names(Designs_medhigh)[i], '\n')
+    for(j in 1:4) {
+  
+    magicplot(x=Designs_medhigh[,i],
+                  y=Vdir[,j],
+                  # main=names(Designs_medhigh)[i],
+                  main="Numeric - directional",
+                  ylab=names(Vdir_cat)[j])
+    magicplot(x=Designs_medhigh[,i],
+                  y=Vabs[,j],
+                  # main=names(Designs_medhigh)[i],
+                  main="Numeric - absolute",
+                  ylab=names(Vdir_cat)[j])
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vdir_cat[,j],
+                  # main=names(Designs_medhigh)[i],
+                  main="Categorical - directional",
+                  ylab=names(Vdir_cat)[j],
+                  col=c(4,3,2), 
+                  horizontal=TRUE)
+    magicplot_cat(x=Designs_medhigh[,i],
+                  y=Vabs_cat[,j],
+                  # main=names(Designs_medhigh)[i],
+                  main="Categorical - absolute",
+                  ylab=names(Vdir_cat)[j],
+                  col=c(3,2), 
+                  horizontal=TRUE)
+    # cat("\\pagebreak", '\n')
+    cat('\n','\n')
   }
 }
 ```

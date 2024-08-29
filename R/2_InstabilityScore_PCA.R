@@ -206,7 +206,7 @@ magicplot <- function(x, y, main,...) {
 }
 
 ## defining a new plotting function to plot (categorical) instability vs all variables
-magicplot_cat <- function(x, y, main, ylab, ...) {
+magicplot_cat <- function(x, y, main, ylab, horizontal=FALSE, ...) {
   # assuming y is categorical
 
   if(class(x) %in% c("factor","character")) {
@@ -218,9 +218,16 @@ magicplot_cat <- function(x, y, main, ylab, ...) {
     thetable2 <- table(x,y)
     dimnames(thetable2)[[1]] <- paste0(dimnames(thetable2)[[1]],
                                        " (n = ", table(x),")")
-    mosaicplot(thetable2, xlab=main, ylab="",# labs are new
+    if(horizontal) {
+      mosaicplot(thetable2, ylab=ylab, xlab="",# labs are new
+                 main=c(main, paste("chi^2 pval =", round(pval, 4))), #was main
+                 ...=...)
+    } else {
+      mosaicplot(thetable2, xlab=main, ylab="",# labs are new
                main=c(ylab, paste("chi^2 pval =", round(pval, 4))), #was main
                ...=...)
+    }
+
 
   } else {
     #
@@ -245,16 +252,30 @@ magicplot_cat <- function(x, y, main, ylab, ...) {
       namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
                                     sum(y==theplotnames[inames], na.rm=TRUE), ")")
     }
-    boxplot(x ~ y,
-            main=c(ylab, paste("Anova pval =", round(pval, 4))), # was main
-            xlab="",
-            ylab=main, # new
-            # ylab="",
-            # xlab=main, # new
-            # horizontal=TRUE,
-            names = namestoplot,
-            # names = paste0(names(thetab), " (n = ", thetab, ")"),
-            las=2,
-            ...=...)
+    if(horizontal) {
+      boxplot(x ~ y,
+              main=c(ylab, paste("Anova pval =", round(pval, 4))), # was main
+              # xlab="",
+              # ylab=main, # new
+              ylab="",
+              xlab=main, # new
+              horizontal=TRUE,
+              names = namestoplot,
+              # names = paste0(names(thetab), " (n = ", thetab, ")"),
+              las=2,
+              ...=...)
+    } else {
+      boxplot(x ~ y,
+              main=c(ylab, paste("Anova pval =", round(pval, 4))), # was main
+              xlab="",
+              ylab=main, # new
+              # ylab="",
+              # xlab=main, # new
+              # horizontal=TRUE,
+              names = namestoplot,
+              # names = paste0(names(thetab), " (n = ", thetab, ")"),
+              las=2,
+              ...=...)
+    }
   }
 }
