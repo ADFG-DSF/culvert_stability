@@ -65,8 +65,8 @@ dnames <- names(dsub)
 for(iV in 1:4) {
   print(Vnames[iV])
   for(id in 1:ncol(dsub)) {
-    lm1 <- lm(Vabs[,iV] ~ dsub[,id])
-    if(summary(lm1)$coefficients[2,4] <= 0.05) {
+    lm1 <- lm(Vdir[,iV] ~ dsub[,id])
+    if(anova(lm1)$`Pr(>F)`[1] <= 0.05) {
       print(paste(Vnames[iV], "~", dnames[id]))
     }
   }
@@ -84,6 +84,7 @@ for(iV in 1:4) {
 # ---------------
 
 # [1] "Interior Gradient"
+# [1] "Interior Gradient ~ reach_3_channel_type"
 # ---------------
 
 # [1] "Height"
@@ -91,6 +92,7 @@ for(iV in 1:4) {
 # [1] "Height ~ banks_y_n"
 # [1] "Height ~ reach3_design_cr"
 # [1] "Height ~ reach_3_gradient"
+# [1] "Height ~ bank_design_type"
 # ---------------
 
 # [1] "Bank Length"
@@ -103,36 +105,39 @@ for(iV in 1:4) {
 
 
 
-## creating a plotting function to plot ALL instability scores vs ALL variables
-magicplot <- function(x, y, main,...) {
-  # assuming y is numeric
-  pval <- summary(lm(y~x))$coefficients[2,4]
-  if(class(x) %in% c("factor","character")) {
-    x[is.na(x)] <- "_NA_"
-    thetab <- table(x)
-    theplotnames <- boxplot(y~x, plot=FALSE)$names
-    namestoplot <- rep(NA, length(theplotnames))
-    for(inames in seq_along(namestoplot)) {
-      namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
-                                    sum(x==theplotnames[inames]), ")")
-    }
-    boxplot(y ~ x,
-            main=c(main, paste("Anova pval =", round(pval, 4))),
-            xlab="",
-            names = namestoplot,
-            # names = paste0(names(thetab), " (n = ", thetab, ")"),
-            las=2,
-            ...=...)
-  } else {
-    NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
-    x[is.na(x)] <- NAval
-    plot(y ~ x,
-         main=c(main, paste("Reg pval =", round(pval, 4))),
-         xlab="", col=1+(x==NAval),
-         ...=...)
-    axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
-  }
-}
+# ## creating a plotting function to plot ALL instability scores vs ALL variables
+# magicplot <- function(x, y, main,...) {
+#   # assuming y is numeric
+#
+#   # pval <- summary(lm(y~x))$coefficients[2,4]   WRONG!!
+#   pval <- anova(lm(y~x))$`Pr(>F)`[1]
+#
+#   if(class(x) %in% c("factor","character")) {
+#     x[is.na(x)] <- "_NA_"
+#     thetab <- table(x)
+#     theplotnames <- boxplot(y~x, plot=FALSE)$names
+#     namestoplot <- rep(NA, length(theplotnames))
+#     for(inames in seq_along(namestoplot)) {
+#       namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
+#                                     sum(x==theplotnames[inames]), ")")
+#     }
+#     boxplot(y ~ x,
+#             main=c(main, paste("Anova pval =", round(pval, 4))),
+#             xlab="",
+#             names = namestoplot,
+#             # names = paste0(names(thetab), " (n = ", thetab, ")"),
+#             las=2,
+#             ...=...)
+#   } else {
+#     NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
+#     x[is.na(x)] <- NAval
+#     plot(y ~ x,
+#          main=c(main, paste("Reg pval =", round(pval, 4))),
+#          xlab="", col=1+(x==NAval),
+#          ...=...)
+#     axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
+#   }
+# }
 
 ### checking to see which variables are significant by themselves
 for(iV in 1:4) {
@@ -140,7 +145,7 @@ for(iV in 1:4) {
   par(mfrow=c(3,3))
   for(id in 1:ncol(dsub)) {
     lm1 <- lm(Vdir[,iV] ~ dsub[,id])
-    if(summary(lm1)$coefficients[2,4] <= 0.05) {
+    if(anova(lm1)$`Pr(>F)`[1] <= 0.05) {
       # print(paste(Vnames[iV], "~", dnames[id]))
       magicplot(x=dsub[,id], y=Vdir[,iV],
                 main=dnames[id], ylab=paste("V", Vnames[iV]))
@@ -348,168 +353,7 @@ vmod_jags_out <- runthemodel(vmod_data)
 maketheplots(vmod_data, vmod_jags_out)
 
 
-# vmod_data$n <- length(vmod_data$y)
-# vmod_data$do_num <- 1*c(!is.null(vmod_data$num1), !is.null(vmod_data$num2))
-# vmod_data$do_cat <- 1*c(!is.null(vmod_data$cat1), !is.null(vmod_data$cat2), !is.null(vmod_data$cat3))
-# if(is.null(vmod_data$num1)) {
-#   vmod_data$num1 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$num2)) {
-#   vmod_data$num2 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$cat1)) {
-#   vmod_data$cat1 <- rep(1, vmod_data$n)
-#   vmod_data$ncat1 <- 2
-# } else {
-#   vmod_data$cat1 <- as.numeric(as.factor(vmod_data$cat1))
-#   vmod_data$ncat1 <- max(vmod_data$cat1)
-# }
-# if(is.null(vmod_data$cat2)) {
-#   vmod_data$cat2 <- rep(1, vmod_data$n)
-#   vmod_data$ncat2 <- 2
-# } else {
-#   vmod_data$cat2 <- as.numeric(as.factor(vmod_data$cat2))
-#   vmod_data$ncat2 <- max(vmod_data$cat2)
-# }
-# if(is.null(vmod_data$cat3)) {
-#   vmod_data$cat3 <- rep(1, vmod_data$n)
-#   vmod_data$ncat3 <- 2
-# } else {
-#   vmod_data$cat3 <- as.numeric(as.factor(vmod_data$cat3))
-#   vmod_data$ncat3 <- max(vmod_data$cat3)
-# }
-#
-# # JAGS controls
-# niter <- 10000
-# # ncores <- 3
-# ncores <- min(10, parallel::detectCores()-1)
-#
-# {
-#   tstart <- Sys.time()
-#   print(tstart)
-#   vmod_jags_out <- jagsUI::jags(model.file=vmod_jags, data=vmod_data,
-#                                 parameters.to.save=c("bnum1","bnum2","bcat1","bcat2","bcat3","b0","sig"),
-#                                 n.chains=ncores, parallel=T, n.iter=niter,
-#                                 n.burnin=niter/2, n.thin=niter/2000)
-#   print(Sys.time() - tstart)
-# }
-#
-# # nbyname(vmod_jags_out)
-# # plotRhats(vmod_jags_out)
-# # traceworstRhat(vmod_jags_out, parmfrow = c(3, 3))
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   caterpillar(vmod_jags_out, p="bnum1",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_num[2]) {
-#   caterpillar(vmod_jags_out, p="bnum2",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[1]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat2 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat2",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat3 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat3",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels)
-#   abline(h=0, lty=2)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum1[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum2[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
+
 
 
 
@@ -537,168 +381,7 @@ vmod_data <- dothedata(vmod_data)
 vmod_jags_out <- runthemodel(vmod_data)
 maketheplots(vmod_data, vmod_jags_out)
 
-# vmod_data$n <- length(vmod_data$y)
-# vmod_data$do_num <- 1*c(!is.null(vmod_data$num1), !is.null(vmod_data$num2))
-# vmod_data$do_cat <- 1*c(!is.null(vmod_data$cat1), !is.null(vmod_data$cat2), !is.null(vmod_data$cat3))
-# if(is.null(vmod_data$num1)) {
-#   vmod_data$num1 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$num2)) {
-#   vmod_data$num2 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$cat1)) {
-#   vmod_data$cat1 <- rep(1, vmod_data$n)
-#   vmod_data$ncat1 <- 2
-# } else {
-#   vmod_data$cat1 <- as.numeric(as.factor(vmod_data$cat1))
-#   vmod_data$ncat1 <- max(vmod_data$cat1)
-# }
-# if(is.null(vmod_data$cat2)) {
-#   vmod_data$cat2 <- rep(1, vmod_data$n)
-#   vmod_data$ncat2 <- 2
-# } else {
-#   vmod_data$cat2 <- as.numeric(as.factor(vmod_data$cat2))
-#   vmod_data$ncat2 <- max(vmod_data$cat2)
-# }
-# if(is.null(vmod_data$cat3)) {
-#   vmod_data$cat3 <- rep(1, vmod_data$n)
-#   vmod_data$ncat3 <- 2
-# } else {
-#   vmod_data$cat3 <- as.numeric(as.factor(vmod_data$cat3))
-#   vmod_data$ncat3 <- max(vmod_data$cat3)
-# }
-#
-# # JAGS controls
-# niter <- 10000
-# # ncores <- 3
-# ncores <- min(10, parallel::detectCores()-1)
-#
-# {
-#   tstart <- Sys.time()
-#   print(tstart)
-#   vmod_jags_out <- jagsUI::jags(model.file=vmod_jags, data=vmod_data,
-#                                 parameters.to.save=c("bnum1","bnum2","bcat1","bcat2","bcat3","b0","sig"),
-#                                 n.chains=ncores, parallel=T, n.iter=niter,
-#                                 n.burnin=niter/2, n.thin=niter/2000)
-#   print(Sys.time() - tstart)
-# }
-#
-# # nbyname(vmod_jags_out)
-# # plotRhats(vmod_jags_out)
-# # traceworstRhat(vmod_jags_out, parmfrow = c(3, 3))
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   caterpillar(vmod_jags_out, p="bnum1",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_num[2]) {
-#   caterpillar(vmod_jags_out, p="bnum2",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[1]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat2 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat2",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat3 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat3",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels)
-#   abline(h=0, lty=2)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum1[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum2[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
+
 
 
 
@@ -728,168 +411,7 @@ vmod_data <- dothedata(vmod_data)
 vmod_jags_out <- runthemodel(vmod_data)
 maketheplots(vmod_data, vmod_jags_out)
 
-# vmod_data$n <- length(vmod_data$y)
-# vmod_data$do_num <- 1*c(!is.null(vmod_data$num1), !is.null(vmod_data$num2))
-# vmod_data$do_cat <- 1*c(!is.null(vmod_data$cat1), !is.null(vmod_data$cat2), !is.null(vmod_data$cat3))
-# if(is.null(vmod_data$num1)) {
-#   vmod_data$num1 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$num2)) {
-#   vmod_data$num2 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$cat1)) {
-#   vmod_data$cat1 <- rep(1, vmod_data$n)
-#   vmod_data$ncat1 <- 2
-# } else {
-#   vmod_data$cat1 <- as.numeric(as.factor(vmod_data$cat1))
-#   vmod_data$ncat1 <- max(vmod_data$cat1)
-# }
-# if(is.null(vmod_data$cat2)) {
-#   vmod_data$cat2 <- rep(1, vmod_data$n)
-#   vmod_data$ncat2 <- 2
-# } else {
-#   vmod_data$cat2 <- as.numeric(as.factor(vmod_data$cat2))
-#   vmod_data$ncat2 <- max(vmod_data$cat2)
-# }
-# if(is.null(vmod_data$cat3)) {
-#   vmod_data$cat3 <- rep(1, vmod_data$n)
-#   vmod_data$ncat3 <- 2
-# } else {
-#   vmod_data$cat3 <- as.numeric(as.factor(vmod_data$cat3))
-#   vmod_data$ncat3 <- max(vmod_data$cat3)
-# }
-#
-# # JAGS controls
-# niter <- 10000
-# # ncores <- 3
-# ncores <- min(10, parallel::detectCores()-1)
-#
-# {
-#   tstart <- Sys.time()
-#   print(tstart)
-#   vmod_jags_out <- jagsUI::jags(model.file=vmod_jags, data=vmod_data,
-#                                 parameters.to.save=c("bnum1","bnum2","bcat1","bcat2","bcat3","b0","sig"),
-#                                 n.chains=ncores, parallel=T, n.iter=niter,
-#                                 n.burnin=niter/2, n.thin=niter/2000)
-#   print(Sys.time() - tstart)
-# }
-#
-# # nbyname(vmod_jags_out)
-# # plotRhats(vmod_jags_out)
-# # traceworstRhat(vmod_jags_out, parmfrow = c(3, 3))
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   caterpillar(vmod_jags_out, p="bnum1",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_num[2]) {
-#   caterpillar(vmod_jags_out, p="bnum2",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[1]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat2 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat2",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat3 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat3",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels)
-#   abline(h=0, lty=2)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum1[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum2[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
+
 
 
 
@@ -919,169 +441,6 @@ cat3_levels <- NULL
 vmod_data <- dothedata(vmod_data)
 vmod_jags_out <- runthemodel(vmod_data)
 maketheplots(vmod_data, vmod_jags_out)
-
-# vmod_data$n <- length(vmod_data$y)
-# vmod_data$do_num <- 1*c(!is.null(vmod_data$num1), !is.null(vmod_data$num2))
-# vmod_data$do_cat <- 1*c(!is.null(vmod_data$cat1), !is.null(vmod_data$cat2), !is.null(vmod_data$cat3))
-# if(is.null(vmod_data$num1)) {
-#   vmod_data$num1 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$num2)) {
-#   vmod_data$num2 <- rep(1, vmod_data$n)
-# }
-# if(is.null(vmod_data$cat1)) {
-#   vmod_data$cat1 <- rep(1, vmod_data$n)
-#   vmod_data$ncat1 <- 2
-# } else {
-#   vmod_data$cat1 <- as.numeric(as.factor(vmod_data$cat1))
-#   vmod_data$ncat1 <- max(vmod_data$cat1)
-# }
-# if(is.null(vmod_data$cat2)) {
-#   vmod_data$cat2 <- rep(1, vmod_data$n)
-#   vmod_data$ncat2 <- 2
-# } else {
-#   vmod_data$cat2 <- as.numeric(as.factor(vmod_data$cat2))
-#   vmod_data$ncat2 <- max(vmod_data$cat2)
-# }
-# if(is.null(vmod_data$cat3)) {
-#   vmod_data$cat3 <- rep(1, vmod_data$n)
-#   vmod_data$ncat3 <- 2
-# } else {
-#   vmod_data$cat3 <- as.numeric(as.factor(vmod_data$cat3))
-#   vmod_data$ncat3 <- max(vmod_data$cat3)
-# }
-#
-# # JAGS controls
-# niter <- 10000
-# # ncores <- 3
-# ncores <- min(10, parallel::detectCores()-1)
-#
-# {
-#   tstart <- Sys.time()
-#   print(tstart)
-#   vmod_jags_out <- jagsUI::jags(model.file=vmod_jags, data=vmod_data,
-#                                 parameters.to.save=c("bnum1","bnum2","bcat1","bcat2","bcat3","b0","sig"),
-#                                 n.chains=ncores, parallel=T, n.iter=niter,
-#                                 n.burnin=niter/2, n.thin=niter/2000)
-#   print(Sys.time() - tstart)
-# }
-#
-# # nbyname(vmod_jags_out)
-# # plotRhats(vmod_jags_out)
-# # traceworstRhat(vmod_jags_out, parmfrow = c(3, 3))
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   caterpillar(vmod_jags_out, p="bnum1",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_num[2]) {
-#   caterpillar(vmod_jags_out, p="bnum2",
-#               main=c(num1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax="linear effect")
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[1]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat2 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat2",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat3 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat3",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels)
-#   abline(h=0, lty=2)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main)
-# }
-#
-# par(mfrow=c(2,2))
-# if(vmod_data$do_num[1]) {
-#   magicplot(x=vmod_data$num1, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num1_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum1[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_num[2]) {
-#   magicplot(x=vmod_data$num2, y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=num2_main)
-#   for(i in sample(1:niter, 100)) {
-#     abline(a=vmod_jags_out$sims.list$b0[i],
-#            b=vmod_jags_out$sims.list$bnum2[i],
-#            col=adjustcolor(4,alpha.f=.1))
-#   }
-# }
-# if(vmod_data$do_cat[1]) {
-#   magicplot(x=cat1_levels[vmod_data$cat1], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat1_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat1 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat1_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat1_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[2]) {
-#   magicplot(x=cat2_levels[vmod_data$cat2], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat2_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat2 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat2_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat2_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
-# if(vmod_data$do_cat[3]) {
-#   magicplot(x=cat3_levels[vmod_data$cat3], y=Vdir[,iV],
-#             ylab=paste("V", Vnames[iV]), main=cat3_main,
-#             col=adjustcolor(1,alpha.f=.1), border=adjustcolor(1,alpha.f=.2))
-#   caterpillar(vmod_jags_out$sims.list$bcat3 + vmod_jags_out$sims.list$b0,
-#               # vmod_jags_out$sims.list$bcat1 + mean(vmod_data$y, na.rm=TRUE),
-#               # vmod_jags_out, p="bcat1",
-#               main=c(cat3_main,"- effect on -",paste("V", Vnames[iV])),
-#               xax=cat3_levels, add=TRUE, col=4)
-#   abline(h=0, lty=2)
-# }
 
 
 ### see if I can generalize this to adapt to Vabs if needed

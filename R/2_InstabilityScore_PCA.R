@@ -167,3 +167,94 @@ colnames(pca_out) <- c(paste0("PCA_all_", 1:ncol(pc_all$scores)),
                        paste0("PCA_banks_", 1:ncol(pc_banks$scores)))
 pca_out <- as.data.frame(pca_out)
 
+
+
+
+## creating a plotting function to plot ALL instability scores vs ALL variables
+magicplot <- function(x, y, main,...) {
+  # assuming y is numeric
+  # pval <- summary(lm(y~x))$coefficients[2,4]
+
+  # pval <- summary(lm(y~x))$coefficients[2,4]   WRONG!!
+  pval <- anova(lm(y~x))$`Pr(>F)`[1]
+
+  if(class(x) %in% c("factor","character")) {
+    x[is.na(x)] <- "_NA_"
+    thetab <- table(x)
+    theplotnames <- boxplot(y~x, plot=FALSE)$names
+    namestoplot <- rep(NA, length(theplotnames))
+    for(inames in seq_along(namestoplot)) {
+      namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
+                                    sum(x==theplotnames[inames]), ")")
+    }
+    boxplot(y ~ x,
+            main=c(main, paste("Anova pval =", round(pval, 4))),
+            xlab="",
+            names = namestoplot,
+            # names = paste0(names(thetab), " (n = ", thetab, ")"),
+            las=2,
+            ...=...)
+  } else {
+    NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
+    x[is.na(x)] <- NAval
+    plot(y ~ x,
+         main=c(main, paste("Reg pval =", round(pval, 4))),
+         xlab="", col=1+(x==NAval),
+         ...=...)
+    axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
+  }
+}
+
+## defining a new plotting function to plot (categorical) instability vs all variables
+magicplot_cat <- function(x, y, main, ylab, ...) {
+  # assuming y is categorical
+
+  if(class(x) %in% c("factor","character")) {
+    # mosaicplot with addl NA and sample sizes for columns
+    thetable1 <- table(x,y)
+    pval <- chisq.test(thetable1)$p.value
+    x <- as.character(x)
+    x[is.na(x)] <- "_NA_"
+    thetable2 <- table(x,y)
+    dimnames(thetable2)[[1]] <- paste0(dimnames(thetable2)[[1]],
+                                       " (n = ", table(x),")")
+    mosaicplot(thetable2, xlab=main, ylab="",# labs are new
+               main=c(ylab, paste("chi^2 pval =", round(pval, 4))), #was main
+               ...=...)
+
+  } else {
+    #
+    # NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
+    # x[is.na(x)] <- NAval
+    # plot(y ~ x,
+    #      main=c(main, paste("Reg pval =", round(pval, 4))),
+    #      xlab="", col=1+(x==NAval),
+    #      ...=...)
+    # axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
+    # pval <- summary(lm(x~y))$coefficients[2,4]
+
+    # pval <- summary(lm(y~x))$coefficients[2,4]   WRONG!!
+    pval <- anova(lm(x~y))$`Pr(>F)`[1]
+
+    y <- as.character(y)
+    # y[is.na(y)] <- "_NA_"
+    thetab <- table(y)
+    theplotnames <- boxplot(x~y, plot=FALSE)$names
+    namestoplot <- rep(NA, length(theplotnames))
+    for(inames in seq_along(namestoplot)) {
+      namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
+                                    sum(y==theplotnames[inames], na.rm=TRUE), ")")
+    }
+    boxplot(x ~ y,
+            main=c(ylab, paste("Anova pval =", round(pval, 4))), # was main
+            xlab="",
+            ylab=main, # new
+            # ylab="",
+            # xlab=main, # new
+            # horizontal=TRUE,
+            names = namestoplot,
+            # names = paste0(names(thetab), " (n = ", thetab, ")"),
+            las=2,
+            ...=...)
+  }
+}
