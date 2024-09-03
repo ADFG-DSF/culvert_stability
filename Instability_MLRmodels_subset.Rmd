@@ -1,12 +1,12 @@
 ---
-title: "Multiple Regression Models for Instability"
+title: "MLR Models for Data Subsets"
 author: "Matt Tyers"
-date: "2024-08-16"
+date: "2024-08-30"
 output: word_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 12, fig.height = 7, results="hide")
+knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 12, fig.height = 7, results="hide", warning=FALSE, message=FALSE)
 ```
 
 ```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
@@ -20,9 +20,6 @@ dsub <- Designs_medhigh[, colSums(is.na(Designs_medhigh)) == 0]  %>%
   rename(reach_3_width = x3_width_straight) %>%
   rename(reach_3_gradient = reach_3_gradient_51) %>%
   rename(reach_3_channel_type = reach_3_geo_channel_type)
-
-
-dsub <- select(dsub, -reach_3_channel_type)  ################# this is new
 
 # loading additional packages
 library(rpart)
@@ -147,7 +144,20 @@ build_rpart <- function(yy, x) {   # CAREFUL: the data.fram dsub is pulled from 
 }
 ```
 
+```{r}
+## defining data subsets
+dsub <- select(dsub, -reach_3_channel_type)
 
+# dsub1 <- filter(dsub, reach_3_gradient <= 1.5)
+# dsub2 <- filter(dsub, reach_3_gradient > 1.5)
+dsub1 <- dsub[dsub$reach_3_gradient <= 1.5,]
+dsub2 <- dsub[dsub$reach_3_gradient > 1.5,]
+
+Vdir1 <- Vdir[dsub$reach_3_gradient <= 1.5,]
+Vdir2 <- Vdir[dsub$reach_3_gradient > 1.5,]
+
+subsetnames <- c("Reach 3 gradient <= 1.5", "Reach 3 gradient > 1.5")
+```
 
 ## Overview of methods
 
@@ -213,120 +223,153 @@ Finally, true *y* (V score) vs LOOCV predicted y and Fitted y, and their respect
 
 \pagebreak
 
-## Interior Channel Width
+## Interior Channel Width - Multiple Regression
 
-### Multiple Regression
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
+```
+
+```{r, fig.height=8}
+whichone <- 1
+
+par(mfcol=c(2,3))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
+```
+
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
+```
+
+```{r, fig.height=8}
+par(mfcol=c(2,3))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
+```
+
+## Interior Channel Width -  Regression Tree
+
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
+```
 
 ```{r}
-whichone <- 1
+par(mfrow=c(2,3))
+build_rpart(x=dsub1, yy=Vdir1[,whichone])
+```
+
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
+```
+
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub2, yy=Vdir2[,whichone])
+```
+
+
+
+
+
+
+\pagebreak
+
+## Interior Gradient - Multiple Regression
+
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
+```
+
+```{r, fig.height=8}
+whichone <- 2
 
 par(mfcol=c(2,5))
 par(mar=c(10,4,6,2))
-lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
 ```
 
-### Regression Tree
-```{r}
-par(mfrow=c(2,3))
-build_rpart(x=dsub, yy=Vdir[,whichone])
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
 ```
 
-\pagebreak
-
-## Interior Gradient
-
-### Multiple Regression
-
-```{r}
-whichone <- 2
-
+```{r, fig.height=8}
 par(mfcol=c(2,3))
 par(mar=c(10,4,6,2))
-lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
-```
-
-### Regression Tree
-
-```{r}
-par(mfrow=c(2,3))
-build_rpart(x=dsub, yy=Vdir[,whichone])
+lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
 ```
 
 \pagebreak
 
-## Height
+## Interior Gradient -  Regression Tree
 
-### Multiple Regression
-
-```{r}
-whichone <- 3
-
-par(mfcol=c(2,3))
-par(mar=c(10,4,6,2))
-lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
 ```
-
-### Regression Tree
 
 ```{r}
 par(mfrow=c(2,3))
-build_rpart(x=dsub, yy=Vdir[,whichone])
+build_rpart(x=dsub1, yy=Vdir1[,whichone])
 ```
+
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
+```
+
+```{r}
+par(mfrow=c(2,3))
+build_rpart(x=dsub2, yy=Vdir2[,whichone])
+```
+
+
+
+
+
+
 
 \pagebreak
 
-## Bank Length
+## Bank Length - Multiple Regression
 
-### Multiple Regression
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
+```
 
-```{r}
+```{r, fig.height=8}
 whichone <- 4
 
 par(mfcol=c(2,4))
 par(mar=c(10,4,6,2))
-lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
 ```
 
-### Regression Tree
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
+```
+
+```{r, fig.height=8}
+par(mfcol=c(2,5))
+par(mar=c(10,4,6,2))
+lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
+```
+
+\pagebreak
+
+## Bank Length -  Regression Tree
+
+```{r, results='asis'}
+cat("###", subsetnames[1], "\n")
+```
 
 ```{r}
 par(mfrow=c(2,3))
-build_rpart(x=dsub, yy=Vdir[,whichone])
+build_rpart(x=dsub1, yy=Vdir1[,whichone])
+```
+
+```{r, results='asis'}
+cat("###", subsetnames[2], "\n")
 ```
 
 ```{r}
-# # ---
-# 
-# whichone <- 2
-# 
-# par(mfcol=c(2,2))
-# par(mar=c(10,4,4,2))
-# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
-# 
-# par(mfrow=c(2,3))
-# build_rpart(x=dsub, yy=Vdir[,whichone])
-# 
-# # ---
-# 
-# whichone <- 3
-# 
-# par(mfcol=c(2,3))
-# par(mar=c(10,4,4,2))
-# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
-# 
-# par(mfrow=c(2,3))
-# build_rpart(x=dsub, yy=Vdir[,whichone])
-# 
-# # ---
-# 
-# whichone <- 4
-# 
-# par(mfcol=c(2,4))
-# par(mar=c(10,4,4,2))
-# lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
-# 
-# par(mfrow=c(2,3))
-# build_rpart(x=dsub, yy=Vdir[,whichone])
-# 
-# # ---
+par(mfrow=c(2,3))
+build_rpart(x=dsub2, yy=Vdir2[,whichone])
 ```
