@@ -1,15 +1,30 @@
-# Culvert Stability
 # Calculating instability scores and aggregating with PCA
+#
+# The central purpose of this script was to define instability scores associated
+# with each variable of interest, and to explore the possibility of aggregating
+# multiple instability scores without losing information.
+#
+# Specifically:
+# - four scoring methods were defined, and graphically compared
+# - matrices were calculated using the selected methods, for use going forward
+# - correlation between Vscores for all six variables was calculated and visualized
+# - Principal Components Analysis (PCA) was employed to investigate possible aggregation
+#    . Yes, the Banks scores could be aggregated, but it was decided to just keep
+#      one of these for simplicity
+
+
 
 # running the data import script
 source("R/1_culvert_data.R")
 
 
+# loading packages
 library(jagshelper)  # only for random color function
 library(dsftools)    # for plotting correlation
 
 
-# extracting measurements & designs (consistent by index)
+# Extracting new data.frames for measurements & designs (consistent by index)
+# These are the six variables we potentially want to calculate instab scores for
 measurements <- VTable[, c(2, 6, 11, 15, 18, 21)]
 designs <- VTable[, c(3, 7, 12, 16, 19, 22)]
 
@@ -41,12 +56,12 @@ v1 <- function(des, meas) {
 abs_v1 <- function(des, meas) {
   1-(meas/des)
 }
-log_v1 <- function(des, meas) {
+log_v1 <- function(des, meas) {  ### I changed my mind later - this one is best
   meas <- meas + 0.01*diff(range(des, na.rm = TRUE))
   des <- des + 0.01*diff(range(des, na.rm = TRUE))
   log(meas/des)
 }
-abslog_v1 <- function(des, meas) {   ### I like this one the best
+abslog_v1 <- function(des, meas) {   ### I liked this one the best initially
   meas <- meas + 0.01*diff(range(des, na.rm = TRUE))
   des <- des + 0.01*diff(range(des, na.rm = TRUE))
   abs(log(meas/des))
@@ -54,7 +69,13 @@ abslog_v1 <- function(des, meas) {   ### I like this one the best
 
 
 
-# Visualizing them all!
+##### Visualizing them all!
+
+### scoring: measured/design
+
+## Each panel represents a variable we want an instability score for
+## - points represent values of design (x-axis) and measured (y-axis) values
+## - overlayed colored surface represents value of candidate instability score
 cols <- rcolors(nrow(designs))
 par(mfrow=c(2,3))
 for(i in 1:6) {
@@ -62,10 +83,19 @@ for(i in 1:6) {
             bg=cols, pch=21,
             main=names(designs)[i])
 }
+
+## Again, each panel represents a variable for instability scoring
+## - design value is on the x axis
+## - instability score is on the y axis
 for(i in 1:6) plot(designs[,i],
                    v1(designs[,i], measurements[,i]),
                    main=names(designs)[i], xlab="design", ylab="measured/design",
                    pch=16, col=cols)
+
+
+
+
+### scoring: 1-(measured/design)
 
 par(mfrow=c(2,3))
 for(i in 1:6) {
@@ -75,8 +105,11 @@ for(i in 1:6) {
 }
 for(i in 1:6) plot(designs[,i],
                    abs_v1(designs[,i], measurements[,i]),
-                   main=names(designs)[i], xlab="design", ylab="1-measured/design",
+                   main=names(designs)[i], xlab="design", ylab="1-(measured/design)",
                    pch=16, col=cols)
+
+
+### scoring: log(measured/design)    -- I like this one the best
 
 par(mfrow=c(2,3))
 for(i in 1:6) {
@@ -88,6 +121,9 @@ for(i in 1:6) plot(designs[,i],
                    log_v1(designs[,i], measurements[,i]),
                    main=names(designs)[i], xlab="design", ylab="log(measured/design)",
                    pch=16, col=cols)
+
+
+### scoring: log(measured/design)    -- I liked this one originally
 
 par(mfrow=c(2,3))
 for(i in 1:6) {
@@ -101,7 +137,11 @@ for(i in 1:6) plot(designs[,i],
                    pch=16, col=cols)
 
 
-# Calculating a new Vscore using the absolute log
+
+
+# Calculating two matrices of Vscore using the log ratio
+# - Vabs uses the absolute value
+# - Vdir does not (preserves direction)
 # NOTE: this is normalized so all columns have unit variance (all the same scale)
 Vabs <- Vdir <- NA*designs
 for(j in 1:ncol(designs)) {
@@ -115,7 +155,7 @@ for(j in 1:ncol(designs)) {
 names(Vabs) <- names(Vdir) <- c("Interior Channel Width", "Interior Gradient", "Height",
                  "Bank Length", "Bank Height", "Bank Width")
 
-# visualizing all possible pairwise relationships
+# visualizing all possible pairwise relationships of Vscores
 par(mfrow=c(1,1))
 plot(Vabs)
 plot(Vdir)
@@ -126,6 +166,10 @@ cor(Vdir, use="na.or.complete")
 
 parmar <- par("mar")  # storing the margins in the default graphics state
 # setting new margins for the next plot
+
+
+
+## plotting correlation matrices for all Vscores using the dsftools package
 par(mar=c(10, 10, 4, 2))
 plotcor(cor(Vabs, use="na.or.complete"),
         main="Correlation between Instability Scores (absolute)")  # plotting
@@ -134,12 +178,20 @@ plotcor(cor(Vdir, use="na.or.complete"),
 par(mar=parmar) # resetting margins
 
 
-# Principal Components Analysis of all scores
+
+
+## Principal Components Analysis of all scores
+# motivation: there is some correlation between Vscores for different variables:
+# can they be aggregated without losing information?
+
+## PCA for absolute Vscores
 pc_all <- princomp(na.omit(Vabs))
-plot(pc_all)
+plot(pc_all)     # total variance absorbed by each principal component
 pc_all$loadings
-biplot(pc_all)
+biplot(pc_all)   # variables pointing in the same direction are highly correlated
 summary(pc_all)
+# Punchline: 99% of the variability is contained in the first four PC's
+# all three scores for Banks were highly correlated, I bet they could be combined to one
 
 # Principal Components Analysis of just banks
 pc_banks <- princomp(na.omit(Vabs[,4:6]))
@@ -147,6 +199,7 @@ plot(pc_banks)
 pc_banks$loadings
 biplot(pc_banks)
 summary(pc_banks)
+# Punchline: yes, these could definitely be combined into one score!!
 
 
 # bundling PCA scores with equivalent number of rows as dataset
@@ -171,6 +224,9 @@ pca_out <- as.data.frame(pca_out)
 
 
 ## creating a plotting function to plot ALL instability scores vs ALL variables
+## Note: it's a little weird that I define these functions here, but I want to
+## be able to load them to use in a future script at the same time as the
+## outputs from this script
 magicplot <- function(x, y, main,...) {
   # assuming y is numeric
   # pval <- summary(lm(y~x))$coefficients[2,4]

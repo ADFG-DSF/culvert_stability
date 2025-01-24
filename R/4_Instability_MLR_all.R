@@ -1,5 +1,16 @@
 # Using Multple Linear Regression to look for simultaneous effects of multiple variables
 
+# This is more of the meat of the analysis, and goes beyond the effect of one
+# variable at a time, looking for which COMBINATIONS of variables have the greatest
+# simultaneous effect on instability.
+
+# The ideas explored in this script are perhaps better expressed and more
+# succinctly presented in
+# - Instability_MLRmodels.docx (.Rmd)
+# - Instability_MLRmodels_subset.docx (.Rmd)  - separating analyses by gradient.
+
+
+
 # First, a subset of columns is taken for consideration
 # Then, an algorithm is defined to fit ALL POSSIBLE COMBINATIONS of variables
 # - this is cool but time-consuming, even with nvariables = 12
@@ -9,7 +20,7 @@
 #   sequence of possible tuning parameters
 
 
-
+# load all data
 source("R/3_Instability_EDA.R")
 
 # data subset - CURRENTLY ALL NON-MISSING ROWS

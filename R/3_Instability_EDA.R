@@ -1,7 +1,19 @@
-# Creating a dataset that represents the subset of variables we care about
-# Creating some additional variables as re-expressions of others
-# Performing an exploratory data analysis of the effects of all variables
+# This script really starts to get into the meat of the analysis, or at least
+# that pertaining to the idea of "effects of design and measured variables on instability".
+#
+# Functionally, there are two main portions:
+# - Creating a dataset that represents the subset of variables we care about
+#   Creating some additional variables as re-expressions of others
+#   note: these objects are used in all subsequent analyses
+# - Performing an exploratory data analysis of the effects of all variables
 #   (by themselves) on all possible instability scores
+#
+# The ideas and output of this script are perhaps better visualized in the file
+#   Instability_EDAplots.docx (created by Instability_EDAplots.Rmd)
+#
+# Some output is also summarized in the file
+#   Output/pval_table.xlsx
+
 
 
 source("R/2_InstabilityScore_PCA.R")

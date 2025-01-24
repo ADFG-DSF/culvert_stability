@@ -1,3 +1,21 @@
+## The main purpose of this script was to visualize the effects within the
+## multiple regression models, since so far the variables had only been plotted
+## one at a time.
+
+## For the top models for each Vscore (directional), plots were produced for each
+## variable in turn, but overlayed with MLR effects plots.  In many cases, the
+## data plot indicated no evidence of relationship (and p-values are taken from this)
+## but the MLR effects are present and evident by the effects plots.
+
+## Effects plots were made by expressing the MLR as an equivalent Bayesian model.
+
+## This was only done for directional Vscores, never with absolute or categorical.
+## This script is incomplete, and I think was abandoned at one point.  Still cool though.
+
+
+
+
+### some notes to myself at one point:
 # decisions that I want to make:
 # * which score?
 #   - numeric & directional
@@ -139,7 +157,7 @@ for(iV in 1:4) {
 #   }
 # }
 
-### checking to see which variables are significant by themselves
+### plotting all variables that are significant in themselves
 for(iV in 1:4) {
   # print(Vnames[iV])
   par(mfrow=c(3,3))
@@ -179,7 +197,8 @@ for(iV in 1:4) {
 ### make them Bayesian to make effects plots
 library(jagsUI)
 library(jagshelper)
-# specify model, which is written to a temporary file
+
+# creating a generic model that can be used with any data we are interested in
 vmod_jags <- tempfile()
 cat('model {
   for(i in 1:n) {
@@ -217,7 +236,8 @@ cat('model {
 
 
 
-
+# a function to create a standardized data object that is interpretable by the
+# generic model above
 dothedata <- function(vmod_data) {
   vmod_data$n <- length(vmod_data$y)
   vmod_data$do_num <- 1*c(!is.null(vmod_data$num1), !is.null(vmod_data$num2))
@@ -253,6 +273,7 @@ dothedata <- function(vmod_data) {
   return(vmod_data)
 }
 
+# a wrapper function to run the generic model
 runthemodel <- function(vmod_data) {
   tstart <- Sys.time()
   print(tstart)
@@ -268,6 +289,7 @@ niter <- 10000
 # ncores <- 3
 ncores <- min(10, parallel::detectCores()-1)
 
+# a function to automagically overlay data plots with model effects plots!
 maketheplots <- function(vmod_data, vmod_jags_out) {
   par(mfrow=c(2,2))
   if(vmod_data$do_num[1]) {
@@ -326,9 +348,7 @@ maketheplots <- function(vmod_data, vmod_jags_out) {
   }
 }
 
-
-# bundle data to pass into JAGS
-
+# MODEL:
 # Vdir$`Interior Channel Width` ~
 #   dsub$bank_design_type +
 #   dsub$reach_3_channel_type +
@@ -361,6 +381,7 @@ maketheplots(vmod_data, vmod_jags_out)
 
 
 
+# MODEL:
 # Vdir$`Interior Gradient` ~
 #   dsub$reach_3_channel_type
 
@@ -389,6 +410,7 @@ maketheplots(vmod_data, vmod_jags_out)
 
 
 
+# MODEL:
 # Vdir$Height ~
 #   dsub$reach_3_gradient +
 #   dsub$reach3_design_cr
@@ -419,6 +441,7 @@ maketheplots(vmod_data, vmod_jags_out)
 
 
 
+# MODEL:
 # Vdir$`Bank Length` ~
 #   dsub$banks_y_n +
 #   dsub$culvert_shape +
