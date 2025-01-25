@@ -229,6 +229,15 @@ Finally, true *y* (V score) vs LOOCV predicted y and Fitted y, and their respect
 cat("###", subsetnames[1], "\n")
 ```
 
+```{r, results='asis', fig.show='hide'}
+whichone <- 1
+
+thecolumns <- lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
+
 ```{r, fig.height=8}
 whichone <- 1
 
@@ -239,6 +248,15 @@ lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
 
 ```{r, results='asis'}
 cat("###", subsetnames[2], "\n")
+```
+
+```{r, results='asis', fig.show='hide'}
+whichone <- 1
+
+thecolumns <- lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
 ```
 
 ```{r, fig.height=8}
@@ -280,6 +298,15 @@ build_rpart(x=dsub2, yy=Vdir2[,whichone])
 cat("###", subsetnames[1], "\n")
 ```
 
+```{r, results='asis', fig.show='hide'}
+whichone <- 2
+
+thecolumns <- lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
+
 ```{r, fig.height=8}
 whichone <- 2
 
@@ -290,6 +317,15 @@ lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
 
 ```{r, results='asis'}
 cat("###", subsetnames[2], "\n")
+```
+
+```{r, results='asis', fig.show='hide'}
+whichone <- 2
+
+thecolumns <- lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
 ```
 
 ```{r, fig.height=8}
@@ -334,6 +370,15 @@ build_rpart(x=dsub2, yy=Vdir2[,whichone])
 cat("###", subsetnames[1], "\n")
 ```
 
+```{r, results='asis', fig.show='hide'}
+whichone <- 4
+
+thecolumns <- lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
+
 ```{r, fig.height=8}
 whichone <- 4
 
@@ -344,6 +389,15 @@ lm_grow(x=dsub1, y=Vdir1[,whichone], xnames=names(dsub1))
 
 ```{r, results='asis'}
 cat("###", subsetnames[2], "\n")
+```
+
+```{r, results='asis', fig.show='hide'}
+whichone <- 4
+
+thecolumns <- lm_grow(x=dsub2, y=Vdir2[,whichone], xnames=names(dsub2))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
 ```
 
 ```{r, fig.height=8}

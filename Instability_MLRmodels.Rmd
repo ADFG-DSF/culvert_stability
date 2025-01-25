@@ -6,7 +6,7 @@ output: word_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 12, fig.height = 7, results="hide")
+knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 12, fig.height = 6.8, results="hide")
 ```
 
 ```{r, warning=FALSE, message=FALSE, results="hide", fig.keep="none"}
@@ -217,12 +217,21 @@ Finally, true *y* (V score) vs LOOCV predicted y and Fitted y, and their respect
 
 ### Multiple Regression
 
+```{r, results='asis', fig.show='hide'}
+whichone <- 1
+
+thecolumns <- lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
+
 ```{r}
 whichone <- 1
 
 par(mfcol=c(2,5))
 par(mar=c(10,4,6,2))
-lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+thecolumns <- lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
 ```
 
 ### Regression Tree
@@ -236,6 +245,15 @@ build_rpart(x=dsub, yy=Vdir[,whichone])
 ## Interior Gradient
 
 ### Multiple Regression
+
+```{r, results='asis', fig.show='hide'}
+whichone <- 2
+
+thecolumns <- lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
 
 ```{r}
 whichone <- 2
@@ -258,6 +276,15 @@ build_rpart(x=dsub, yy=Vdir[,whichone])
 
 ### Multiple Regression
 
+```{r, results='asis', fig.show='hide'}
+whichone <- 3
+
+thecolumns <- lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
+
 ```{r}
 whichone <- 3
 
@@ -278,6 +305,15 @@ build_rpart(x=dsub, yy=Vdir[,whichone])
 ## Bank Length
 
 ### Multiple Regression
+
+```{r, results='asis', fig.show='hide'}
+whichone <- 4
+
+thecolumns <- lm_grow(x=dsub, y=Vdir[,whichone], xnames=names(dsub))
+
+cat("Top model:", "\n","\n",
+"V", names(Vdir)[whichone], "~", paste(names(dsub)[thecolumns], collapse=" + "))
+```
 
 ```{r}
 whichone <- 4

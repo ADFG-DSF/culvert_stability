@@ -21,6 +21,9 @@ source("R/1_culvert_data.R")
 # loading packages
 library(jagshelper)  # only for random color function
 library(dsftools)    # for plotting correlation
+# code as needed to install the dsftools package:
+# # install.packages("devtools")
+# devtools::install_github("ADFG-DSF/dsftools")
 
 
 # Extracting new data.frames for measurements & designs (consistent by index)

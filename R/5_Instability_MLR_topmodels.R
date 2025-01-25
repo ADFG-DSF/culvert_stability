@@ -36,8 +36,10 @@
 # * correlation plot for numeric/directional
 
 
+# loading data objects & plotting functions
 source("R/3_Instability_EDA.R")
 
+# creating a subset of data we are interested in, and renaming some columns
 dsub <- Designs_medhigh[, colSums(is.na(Designs_medhigh)) == 0]  %>%
   rename(culvert_shape = culvert_shape_at_waterline_straight_sides_or_curved) %>%
   rename(banks_y_n = banks_y_n_10) %>%
@@ -47,13 +49,13 @@ dsub <- Designs_medhigh[, colSums(is.na(Designs_medhigh)) == 0]  %>%
 
 
 # using dsub & Vdir
-names(dsub)
+names(dsub)  # data subset
 # [1] "culvert_shape"           "lake_outlet"             "banks_y_n"
 # [4] "features_y_n"            "reach_3_structure_width" "reach3_design_cr"
 # [7] "reach_3_total_length"    "reach_3_gradient"        "reach_3_channel_type"
 # [10] "bank_design_type"        "reach_3_width"           "reach3_design_cr_cat"
 
-names(Vdir)
+names(Vdir)  # Vscores - directional
 # [1] "Interior Channel Width" "Interior Gradient"      "Height"
 # [4] "Bank Length"            "Bank Height"            "Bank Width"
 
@@ -123,39 +125,7 @@ for(iV in 1:4) {
 
 
 
-# ## creating a plotting function to plot ALL instability scores vs ALL variables
-# magicplot <- function(x, y, main,...) {
-#   # assuming y is numeric
-#
-#   # pval <- summary(lm(y~x))$coefficients[2,4]   WRONG!!
-#   pval <- anova(lm(y~x))$`Pr(>F)`[1]
-#
-#   if(class(x) %in% c("factor","character")) {
-#     x[is.na(x)] <- "_NA_"
-#     thetab <- table(x)
-#     theplotnames <- boxplot(y~x, plot=FALSE)$names
-#     namestoplot <- rep(NA, length(theplotnames))
-#     for(inames in seq_along(namestoplot)) {
-#       namestoplot[inames] <- paste0(theplotnames[inames], " (n = ",
-#                                     sum(x==theplotnames[inames]), ")")
-#     }
-#     boxplot(y ~ x,
-#             main=c(main, paste("Anova pval =", round(pval, 4))),
-#             xlab="",
-#             names = namestoplot,
-#             # names = paste0(names(thetab), " (n = ", thetab, ")"),
-#             las=2,
-#             ...=...)
-#   } else {
-#     NAval <- min(x, na.rm=TRUE) - 0.2*diff(range(x, na.rm=TRUE))
-#     x[is.na(x)] <- NAval
-#     plot(y ~ x,
-#          main=c(main, paste("Reg pval =", round(pval, 4))),
-#          xlab="", col=1+(x==NAval),
-#          ...=...)
-#     axis(side=1, at=NAval, labels=paste0("NA (n=", sum(x==NAval),")"), las=2)
-#   }
-# }
+
 
 ### plotting all variables that are significant in themselves
 for(iV in 1:4) {
@@ -173,7 +143,7 @@ for(iV in 1:4) {
 
 
 
-### these are the top models:
+### again, these are the top models (expressed as model object):
 
 # Vdir$`Interior Channel Width` ~
 #   dsub$bank_design_type +
