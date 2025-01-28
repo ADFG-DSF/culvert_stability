@@ -33,7 +33,7 @@ data_smasher <- function(df, na_values = c("na", "#DIV/0!")) {
   return(df)
 }
 
-VTable <- read_xlsx("Assessment Data June 10 2024.xlsx",
+VTable <- read_xlsx("Data/Assessment Data June 10 2024.xlsx",
                     sheet = "VTable",
                    range="A1:X67") %>% data_smasher
 

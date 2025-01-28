@@ -1,5 +1,5 @@
 ---
-title: "In which there are altogether too many EDA plots"
+title: "In which there are too many EDA plots"
 author: "Matt Tyers"
 date: "2024-08-19"
 output: word_document
@@ -248,8 +248,6 @@ for(i in 1:4) {
 # }
 ```
 
-## Directional Instability - Numeric
-
 ```{r}
 names(Vdir) <- paste("V", names(Vdir))
 names(Vabs) <- paste("V", names(Vabs))
@@ -257,71 +255,7 @@ names(Vdir_cat) <- paste("V", names(Vdir_cat))
 names(Vabs_cat) <- paste("V", names(Vabs_cat))
 ```
 
-```{r, , eval=FALSE}
-# considering directional instability
-par(mfrow=c(6,4))
-for(i in 1:ncol(Designs_medhigh)) {
-  for(j in 1:4) {
-    par(mar=c(8,5,4,2))
-    magicplot(x=Designs_medhigh[,i],
-              y=Vdir[,j],
-              main=names(Designs_medhigh)[i],
-              ylab=names(Vdir)[j])
-  }
-}
-```
-
-## Absolute Instability - Numeric
-
-```{r, eval=FALSE}
-# considering absolute instability
-par(mfrow=c(7,4))
-for(i in 1:ncol(Designs_medhigh)) {
-  for(j in 1:4) {
-    par(mar=c(8,5,4,2))
-    magicplot(x=Designs_medhigh[,i],
-              y=Vabs[,j],
-              main=names(Designs_medhigh)[i],
-              ylab=names(Vabs)[j])
-  }
-}
-```
-
-## Directional Instability - Categorical
-
-```{r, eval=FALSE}
-# considering directional instability
-par(mfrow=c(7,4))
-par(mar=c(8,5,4,2))
-for(i in 1:ncol(Designs_medhigh)) {
-  for(j in 1:4) {
-    magicplot_cat(x=Designs_medhigh[,i],
-                  y=Vdir_cat[,j],
-                  main=names(Designs_medhigh)[i],
-                  ylab=names(Vdir_cat)[j],
-                  col=c(4,3,2))
-  }
-}
-```
-
-## Absolute Instability - Categorical
-
-```{r, eval=FALSE}
-# considering absolute instability
-par(mfrow=c(7,4))
-par(mar=c(8,5,4,2))
-for(i in 1:ncol(Designs_medhigh)) {
-  for(j in 1:4) {
-    magicplot_cat(x=Designs_medhigh[,i],
-                  y=Vabs_cat[,j],
-                  main=names(Designs_medhigh)[i],
-                  ylab=names(Vdir_cat)[j],
-                  col=c(3,2))
-  }
-}
-```
-
-# Another way of looking at this - Each row is an explanatory variable, each column is a response variable type
+# Each group is an explanatory variable, each row is a V score variable, each column is a V score type
 
 ```{r, results='asis', fig.height=14}
 j <- 1   ##### actually do a section for each explanatory variable i
