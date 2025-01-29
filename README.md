@@ -59,6 +59,14 @@ existed.  An alternate analysis using nonlinear regression trees was also consid
 
 ### Is there a punchline?
 
+This analysis is unfinished at present, and is in the unfortunate stage of expansion and 
+experimentation (explosion?) that comes before things coalesce into something that is 
+shaped like a final product.  
+
+I do believe that the log ratio gives a reasonable basis for numeric comparison, given
+the data that we have.  At the very least, I think it's a useful metric for comparing
+measurements of what things are versus what we expect them to be.
+
 * explanatory variables are inter-related
   * for SLR: is an observed effect due to that variable, or another
   * for MLR: once a variable is in the model, similar variables are no longer 
@@ -73,7 +81,9 @@ Also very interesting that the subset analysis identified two sets of variables 
 
 * The MLR document is much more of a work product than the EDA
 
-## Work products and the **/Output** subfolder
+## A description of folder contents
+
+CWork products and the **/Output** subfolder
 
 * **Instability_EDAplots.docx**:
 The intent of this document was an Exploratory Data Analysis, in which all V scores were plotted
@@ -107,7 +117,7 @@ This was a supplemental analysis building on the MLR models.  Since it was ident
 fundamental difference could exist between high- and low-gradient stream systems, the above
 analysis was repeated, but with subsets of systems with a gradient less than / greater than 1.5.
 
-## **/R** subfolder
+### **/R** subfolder
 
 * **1_culvert_data.R**: This script reads all data and performs some data cleanup and formatting.
 It is `source()`'d in subsequent scripts.
@@ -172,7 +182,7 @@ This script is incomplete, and I think was abandoned at one point.  Still cool t
 * **/deprecated**: A few miscellaneous R scripts representing first-tries, abandoned exploration, or data validation.
 No longer relevant, but retained as a record.
 
-## **/Data** subfolder
+### **/Data** subfolder
 
 * **Design variables with importance Matt 8_7_24.xlsx**: This was the version used for all analysis
 and data exploration.  In terms of the data, this dataset should be functionally identical to the other dataset
