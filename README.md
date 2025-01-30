@@ -53,7 +53,7 @@ Similarly, it was within conjecture that an instability response might behave le
 a linear, numeric effect, and more like a threshold-driven or nonlinear categorical effect.
 Therefore it seemed prudent to explore all possibilities.
 
-Next, the isolated effects of individual variables were tested using Multiple Regression.
+Next, the isolated effects of individual variables were tested using multiple linear regression (MLR).
 The preponderance of work so far was devoted to model selection, as many potential variables
 existed.  An alternate analysis using nonlinear regression trees was also considered.
 
@@ -64,26 +64,34 @@ experimentation (explosion?) that comes before things coalesce into something th
 shaped like a final product.  
 
 I do believe that the log ratio gives a reasonable basis for numeric comparison, given
-the data that we have.  At the very least, I think it's a useful metric for comparing
+the data that we have.  At the very least, it's a useful metric for comparing
 measurements of what things are versus what we expect them to be.
 
-* explanatory variables are inter-related
-  * for SLR: is an observed effect due to that variable, or another
-  * for MLR: once a variable is in the model, similar variables are no longer 
-  important but independent variables might become important
-  
-* log ratio does seem to be a reasonable basis for numeric comparison, given the data that we have
+The MLR analysis is definitely more in line with the intent of the operational plan, and 
+probably represents a more robust analysis product.  The punchline I see from this effort
+is that there do exist sets of design and measured variables that have surprisingly
+strong relationships with instability (V) scores, particularly that for the change in
+interior channel width.  MLR had the additional benefit of isolating the independent
+effects of variables, which might not be apparent when considering variables one at a time.
 
-* Many variables don't have much effect on any of our V scores (which is fine!) Some do.
+The intent of the EDA was purely exploratory, however.  Many variables have no effect
+on instability scores (which is fine!), but some do.  I mostly wanted to automate the
+generation of all possible plots, so they could be quickly scanned for stories, rather 
+than having to build one plot at a time in Excel ($\times$ a few hundred plots).
 
-* I was actually impressed with the MLR model fit for interior channel width.  
-Also very interesting that the subset analysis identified two sets of variables that were all important in the combined analysis
+Both analyses come with an important caveat: many of the variables are inter-related with
+one another.  In the EDA, this means that an observed effect might be due to the variable
+being considered, or some other inter-related variable.  In the MLR, this means that once
+a variable is in the model, similar variables might no longer be important, and variables
+that are relatively independent might become important once the effects of other variables
+are accounted for.  Therefore, the collection of variables in the top model for a given
+instability score might not be those with the strongest "raw" relationship
+with instability, but they will likely represent the collection of variables with the 
+strongest mutually independent effects, as well as the greatest predictive power.
 
-* The MLR document is much more of a work product than the EDA
+## Folder contents
 
-## A description of folder contents
-
-CWork products and the **/Output** subfolder
+### Work products and the **/Output** subfolder
 
 * **Instability_EDAplots.docx**:
 The intent of this document was an Exploratory Data Analysis, in which all V scores were plotted
@@ -97,6 +105,12 @@ interpreted biometrically; rather, to aid qualitative assessment of patterns.
   - Column: V score type (numeric, directional vs absolute; categorical, directional vs absolute)
   
   This documentation is a presentation of the body of work found in R/3_Instability_EDA.R
+  
+* **Output/pval_table.xlsx**:
+This is a single-table summary of the p-values associated with all plots above, with a bit of
+conditional formatting to highlight significant relationships.  Again, these should be interpreted
+qualitatively and descriptively.  The file **Output/raw_pvaltable.csv** was directly exported from R,
+and is the same information, minus all formatting.
 
 * **Instability_MLRmodels.docx**:
 The intent of this document was to explore the isolated and simultaneous effects of all design or measured 
@@ -116,6 +130,11 @@ primary tool used for this, but regression trees were also constructed as a supp
 This was a supplemental analysis building on the MLR models.  Since it was identified that a 
 fundamental difference could exist between high- and low-gradient stream systems, the above
 analysis was repeated, but with subsets of systems with a gradient less than / greater than 1.5.
+
+* **new_Vscore.docx**:
+This document is essentially deprecated, and was an informal presentation of some of my early ideas
+for scoring instability.  It presents the absolute log ratio and some initial (mostly abandoned) ideas
+for using Principal Components Analysis (PCA) to aggregate scores.
 
 ### **/R** subfolder
 
@@ -141,11 +160,11 @@ in subsequent scripts.
 that pertaining to the idea of "effects of design and measured variables on instability".
 
   Functionally, there are two main portions:
-  - Creating a dataset that represents the subset of variables we care about
-  Creating some additional variables as re-expressions of others
-  note: these objects are used in all subsequent analyses
+  - Creating a dataset that represents the subset of variables we care about, with 
+  some additional variables created as re-expressions of others.
+  Note: these objects are used in all subsequent analyses.
   - Performing an exploratory data analysis of the effects of all variables
-  (by themselves) on all possible instability scores
+  (by themselves) on all possible instability scores.
 
   The ideas and output of this script are perhaps better visualized in the file
   Instability_EDAplots.docx (created by Instability_EDAplots.Rmd)
@@ -156,7 +175,7 @@ that pertaining to the idea of "effects of design and measured variables on inst
 * **4_Instability_MLR_all.R**:
   This is more of the meat of the analysis, and goes beyond the effect of one
 variable at a time, looking for which COMBINATIONS of variables have the greatest
-simultaneous effect on instability.
+simultaneous effect on instability, therefore isolating the effects of individual variables.
 
   The ideas explored in this script are perhaps better expressed and more
 succinctly presented in
@@ -169,7 +188,7 @@ succinctly presented in
 multiple regression models, since so far the variables had only been plotted
 one at a time.
 
-  For the top models for each Vscore (directional), plots were produced for each
+  For the top models for each V score (directional), plots were produced for each
 variable in turn, but overlayed with MLR effects plots.  In many cases, the
 data plot indicated no evidence of relationship (and p-values are taken from this)
 but the MLR effects are present and evident by the effects plots.
