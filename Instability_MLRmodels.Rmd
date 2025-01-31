@@ -77,7 +77,7 @@ lm_grow <- function(x, y, xnames=NULL, plotpreds=TRUE) {
           ypred[idata] <- predict(lm(y~., data=thedata[-idata,]),
                                   newdata=thedata[idata,])
         }
-        plot(ypred, y, xlab="LOOCV Predicted y", ylab="True y",
+        plot(ypred, y, xlab="LOOCV Predicted V", ylab="True V",
              main=xnames[vars_grow])
         legend("topleft", paste("R^2 =", round(cor(ypred, y)^2, 3)), bg=NA)
         abline(0,1)
@@ -92,7 +92,7 @@ lm_grow <- function(x, y, xnames=NULL, plotpreds=TRUE) {
     axis(side=1, at=0:length(vars_grow), labels=c(0, paste("+",xnames[vars_grow])), las=2)
 
     lmfinal <- lm(y~., data=thedata)
-    plot(predict(lmfinal), y, xlab="Fitted y", ylab="True y")
+    plot(predict(lmfinal), y, xlab="Fitted V", ylab="True V")
     legend("topleft", paste("R^2 =", round(summary(lmfinal)$r.squared, 3)), bg=NA)
     abline(0,1)
   }
@@ -138,10 +138,10 @@ build_rpart <- function(yy, x) {   # CAREFUL: the data.fram dsub is pulled from 
   thepart$variable.importance %>% barplot(las=3, main="variable importance")
   rpart.plot(thepart)
   par(mar=c(4,4,4,2))
-  plot(ypred, thedata$yy, xlab="LOOCV predicted y", ylab="true y")
+  plot(ypred, thedata$yy, xlab="LOOCV predicted V", ylab="true V")
   legend("topleft", legend=paste("R^2 =", round(cor(ypred,thedata$yy)^2, 3)))
   abline(0,1)
-  plot(predict(thepart),thedata$yy, xlab="Fitted y", ylab="true y")
+  plot(predict(thepart),thedata$yy, xlab="Fitted V", ylab="true V")
   legend("topleft", legend=paste("R^2 =", round(cor(predict(thepart),thedata$yy)^2, 3)))
   abline(0,1)
 }
@@ -171,9 +171,9 @@ print(names(dsub))
 
 With many potential explanatory variables and a relatively limited sample size, overfitting (selecting too many variables) was a concern, since each culvert by itself had the potential to affect the overall model fit.  To address this concern, the fit of a prospective model was evaluated according to its predictive power.  This was calculated by means of leave-one-out cross validation (LOOCV), and scored using prediction root mean square error (RMSE), calculated according to the form:
 
-$RMSE = \sqrt{\frac{1}{n}\sum(y_i-y^*_i)^2}$
+$RMSE = \sqrt{\frac{1}{n_k}\sum(V_{k[i]}-V^*_{k[i]})^2}$
 
-in which $y^*_i$ represents the predicted value for instability score for culvert $i$, predicted from a prospective model *without* using the data from culvert $i$.  Apologies, these are V scores, and I see now that I switched from V to the more general $y$ in the plots on subsequent pages.
+in which $V^*_{k[i]}$ represents the predicted value for instability score $k$ for culvert $i$, predicted from a prospective model *without* using the data from culvert $i$.  
 
 ### Model-building Algorithm
 
@@ -195,23 +195,23 @@ Two sets of plots are included for each of four V scores.  The first sequence sh
 
 The plot at the top right shows the overall drop in LOOCV RMSE as variables are added.  In two of the four cases, most of the drop in LOOCV RMSE happened with the first variable!
 
-The next row illustrates the predictive power of each iteration of model building, with *LOOCV predicted* *y* on the x-axis ($y^*$ previously), as calculated by models fit *without* each observation, and the $R^2$ reported represents the $R^2$ of *prediction*.  Finally, the plot at the bottom right of this set shows the fitted *y* (fitted V score) on the x-axis and true *y* (true V score) on the y-axis, along with the $R^2$ of model fit.  The line overlayed with these plots is the y=x equality line, not a regression line.
+The next row illustrates the predictive power of each iteration of model building, with *LOOCV predicted* $V^*$ on the x-axis, as calculated by models fit *without* each observation, and the $R^2$ reported represents the $R^2$ of *prediction*.  Finally, the plot at the bottom right of this set shows the fitted *V* on the x-axis and true *V* on the y-axis, along with the $R^2$ of model fit.  The line overlayed with these plots is the y=x equality line, not a regression line.
 
 #### Regression Tree
 
 Below this is a set of plots from a regression tree for each variable.  I have to confess, I know relatively little about the machinery behind regression trees.  The R documentation for the `rpart` function just says that "it follows Breiman et. al (1984) quite closely."  Breiman et al is a textbook, and it's one I haven't read!
 
 Two differences between MLR and regression trees that immediately come to mind are
-* trees treat all numerical variables as categorical, and can perform better if there are nonlinear or especially threshold effects, but poorly if there are approximately linear effects
-* nodes in a tree are conditional only on the previous nodes, whereas MLR effects are global.
+
+* trees treat all numerical variables as categorical, and can perform better if there are nonlinear or threshold effects, but poorly if there are approximately linear effects
+* nodes in a tree are conditional on the previous nodes, whereas MLR effects are global.
 
 There is a set of tuning parameters for regression trees that I honestly haven't messed with, that decide when to attempt a split and when not to.  The first plot (top left) in this set shows trial values of `minsplit`, which is the minimum number of observations in a node to consider a split, vs LOOCV RMSE associated with trees computed at each value.  A tree was then constructed with the best value of `minsplit`.
 
 The next plot is Variable Importance.  I don't know how this is mathematically defined, but seems to be a measure of the overall importance of each variable at the top level.  Often, variables with a high importance score are not used in the final tree, which is probably analogous to important variables not appearing in a final MLR model.
 
-Finally, true *y* (V score) vs LOOCV predicted y and Fitted y, and their respective values of $R^2$.  These can be compared to their MLR counterparts, the final two plots of the MLR set.  Again, the overlayed line is the y=x line, not a regression line.
+Finally, true *V* vs LOOCV predicted $V^*$ and Fitted *V*, and their respective values of $R^2$.  These can be compared to their MLR counterparts, the final two plots of the MLR set.  Again, the overlayed line is the y=x line, not a regression line.
 
-\pagebreak
 
 ## Interior Channel Width
 
