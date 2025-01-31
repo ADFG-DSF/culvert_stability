@@ -9,31 +9,31 @@ output: word_document
 knitr::opts_chunk$set(echo = FALSE, dpi=300, fig.width = 13, fig.height = 18, results="hide", warning=FALSE, message=FALSE)
 ```
 
-## Overview
-
 A sequence of automated plots follow, for all combinations of:
 
--   V scores (directional & numeric), calculated as
+- Variables, both recorded and derived (currently 35 in total!)  Categorical variables were also defined for Design CR (less than 1.1, 1.1 to 1.3, greater than 1.3), and for gradient and width differences between reaches 2 and 3 and reaches 4 and 3 (relative differences exceeding 5%).
 
-$V_{k[i]}^{(raw)} = log \left(\frac{X_{measured[i]}}{X_{design[i]}}\right)$
-
-$V_{k[i]} = \frac{V_{k[i]}^{(raw)}}{SD \left(V_{k[.]}^{(raw)}\right)}$
-
--   V scores (absolute & numeric), calculated as $V_{k[i]}^{(abs)} = |V_{k[i]}|$
-
--   V scores (directional & categorical), defined as
-
-$V_{k[i]}^{(cat)} =  \left\{\begin{array}{lr}  \texttt{"-Negative"}, & \frac{X_{design[i]}}{X_{measured[i]}} > 1.5\\  \texttt{"+Positive"}, & \frac{X_{measured[i]}}{X_{design[i]}} > 1.5\\  \texttt{" Stable"}, & \texttt{else}  \end{array}\right.$
-
--   V scores (absolute & categorical), defined similarly.
-
--   V score measurement:
+-   V score:
     -   Interior Channel Width
     -   Interior Gradient
     -   Height
     -   Bank Length
+    
+- V score type:
 
-- Design Variables, both recorded and derived (currently 35 in total!)  Categorical variables were also defined for Design CR (less than 1.1, 1.1 to 1.3, greater than 1.3), and for gradient and width differences between reaches 2 and 3 and reaches 4 and 3 (relative differences exceeding 5%).
+    -   Numeric & directional, calculated as
+
+    $$V_{k[i]}^{(raw)} = log \left(\frac{X_{measured[i]}}{X_{design[i]}}\right)$$
+
+    $$V_{k[i]} = \frac{V_{k[i]}^{(raw)}}{SD \left(V_{k[.]}^{(raw)}\right)}$$
+
+    -   Numeric & absolute, calculated as $V_{k[i]}^{(abs)} = |V_{k[i]}|$
+
+    -   Categorical & directional, defined as
+
+    $$V_{k[i]}^{(cat)} =  \left\{\begin{array}{lr}  \texttt{"-Negative"}, & \frac{X_{design[i]}}{X_{measured[i]}} > 1.5\\  \texttt{"+Positive"}, & \frac{X_{measured[i]}}{X_{design[i]}} > 1.5\\  \texttt{" Stable"}, & \texttt{else}  \end{array}\right.$$
+
+    -   Categorical & absolute, defined similarly.
 
 Test p-values are reported for all plots, corresponding to ANOVA, simple linear regression, or Chi-squared tests.  Plots also include categories for missing data, but missing data were excluded from statistical tests.  Test p-values are included for exploratory purposes ONLY, and should not be interpreted as biometrically sound!!
 
@@ -255,7 +255,7 @@ names(Vdir_cat) <- paste("V", names(Vdir_cat))
 names(Vabs_cat) <- paste("V", names(Vabs_cat))
 ```
 
-# Each group is an explanatory variable, each row is a V score variable, each column is a V score type
+# Each group is a variable, each row is a V score, each column is a V score type
 
 ```{r, results='asis', fig.height=14}
 j <- 1   ##### actually do a section for each explanatory variable i

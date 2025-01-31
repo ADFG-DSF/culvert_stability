@@ -148,6 +148,11 @@ names(Vnew) <- c("Interior Channel Width", "Interior Gradient", "Height",
 knitr::kable(cor(Vnew, use="na.or.complete"), digits=3)
 
 par(mfrow=c(1,1))
+par(mar=c(10,10,3,3))
+dsftools::plotcor(cor(Vnew, use="na.or.complete"))
+```
+
+```{r, fig.height=9}
 plot(Vnew)
 ```
 
