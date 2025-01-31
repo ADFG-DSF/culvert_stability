@@ -515,3 +515,30 @@ par(mar=parmar)
 # whatever I find, check out loocv predictive power!!
 # ... or, dredge to the best loocv predictive power
 # figure out fastest way to dredge
+
+
+
+## a quick output of variables with really strong pvals
+justpvals <- pvaltable[, 2*(1:16)]
+byV <- list(justpvals[,1:4],
+            justpvals[,1:4+4],
+            justpvals[,1:4+8],
+            justpvals[,1:4+12])
+maxp <- 0.01
+for(i in 1:4) {
+  cat("\n", names(Vdir)[i], "\n","--", "\n")
+  subsetter <- apply(byV[[i]], 1, \(x) any(x <= maxp, na.rm=TRUE))
+  cat(paste(row.names(justpvals)[subsetter], collapse="\n"), "\n")
+}
+
+for(i in 1:nrow(justpvals)) {
+  if(any(justpvals[i,] <= maxp, na.rm=TRUE)) {
+  cat("\n", row.names(justpvals)[i], "\n","--")
+  for(j in 1:4) {
+  if(any(justpvals[i,1:4+4*(j-1)] <= maxp, na.rm=TRUE)) {
+    cat("\n", names(Vdir)[j])
+  }
+  }
+  cat("\n","----------","\n")
+  }
+}
